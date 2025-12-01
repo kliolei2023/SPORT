@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>獅先生_體育課熱身</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>獅先生_體育課熱身系統 (iPad 優化版)</title>
     <style>
         /* --- 🎨 核心變數 & 主題 --- */
         :root {
@@ -41,7 +40,7 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-main); user-select: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-main); user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg-grad); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; transition: background 1s; }
 
         /* --- 📱 導航列 --- */
@@ -307,7 +306,7 @@
                 <div class="mixer-box">
                     <label style="margin-bottom:5px;">🎵 音樂風格 (可選):</label>
                     <select id="musicPreset" onchange="changeMusicSource()">
-                        <option value="default">沒有音樂 </option>
+                        <option value="default">沒有音樂</option>
                         <option value="energy">激動 (Energy)</option>
                         <option value="happy">開心 (Happy)</option>
                         <option value="game">電玩 (8-Bit)</option>
@@ -376,8 +375,8 @@
         </div>
     </div>
 
-    <audio id="audioWorkPlayer" loop></audio>
-    <audio id="audioRestPlayer" loop></audio>
+    <audio id="audioWorkPlayer" loop playsinline></audio>
+    <audio id="audioRestPlayer" loop playsinline></audio>
 
     <script>
         // --- 1. 翻譯字典 ---
@@ -582,7 +581,7 @@
         let state = 'IDLE'; 
         let isDucking = false;
 
-        let tickCount = 0; // <-- 新增這一行
+        let tickCount = 0; 
         
         let audioCtx;
         let metroGain;
@@ -604,6 +603,17 @@
 
         // --- 4. 初始化 ---
         function selectGrade(grade) {
+            // --- 💡 [修正] 針對 iPad 的解鎖動作 ---
+            // 1. 強制喚醒語音合成引擎
+            if (window.speechSynthesis) {
+                const emptyUtterance = new SpeechSynthesisUtterance(" ");
+                window.speechSynthesis.speak(emptyUtterance);
+            }
+            // 2. 強制解鎖背景音樂播放器
+            workPlayer.play().then(() => workPlayer.pause()).catch(() => {});
+            restPlayer.play().then(() => restPlayer.pause()).catch(() => {});
+            // --- [修正結束] ---
+
             initAudio(); 
             currentGrade = grade;
             document.body.className = `theme-${grade}`;
@@ -649,7 +659,7 @@
             
             if (style === 'custom') {
                 uploadPanel.style.display = 'block';
-                // 如果目前沒上傳檔案，暫時不變動 src，或可提示使用者
+                // 如果目前沒上傳檔案，暫時不變動 src
             } else {
                 uploadPanel.style.display = 'none';
                 workPlayer.src = MUSIC_PRESETS[style];
@@ -657,13 +667,10 @@
         }
 
         function clearCustomMusic() {
-            // 清除 input
             document.getElementById('uploadWork').value = "";
             document.getElementById('uploadRest').value = "";
-            
-            // 強制切換回 Default
             document.getElementById('musicPreset').value = "default";
-            changeMusicSource(); // 觸發切換
+            changeMusicSource(); 
             alert("已清除自訂音樂，恢復為「預設 (House)」風格。");
         }
 
@@ -712,7 +719,7 @@
                 configRestTime = parseInt(document.getElementById('rngRest').value);
             } else { updateTotalEstimate(); }
 
-            // --- 防呆機制：如果選了 Custom 但沒檔案，強制切回 Default ---
+            // 防呆機制
             const preset = document.getElementById('musicPreset').value;
             const customFile = document.getElementById('uploadWork').files[0];
             if (preset === 'custom' && !customFile) {
@@ -730,7 +737,6 @@
             pauseBtn.textContent = "⏸️ 暫停"; 
             isPaused = false;
             
-            // 預載
             workPlayer.load(); restPlayer.load();
             workPlayer.play().then(()=>workPlayer.pause()).catch(()=>{});
             restPlayer.play().then(()=>restPlayer.pause()).catch(()=>{});
@@ -751,35 +757,27 @@
             handleAudioAndVoice(ex); 
             
             clearInterval(timerInterval);
-            timerInterval = setInterval(tick, 500); // <-- 關鍵修改：間隔從 1000 變為 500
-            tickCount = 0; // <-- 關鍵修改：重置計數器
+            timerInterval = setInterval(tick, 500); 
+            tickCount = 0; 
         }
 
-function tick() {
+        function tick() {
             if(isPaused) return;
 
-            // 1. 每 0.5 秒播放一次節拍器聲音
             if (timer > 0) playMetronomeSound();
-
-            // 2. 累加執行次數
             tickCount++;
 
-            // 3. 只有每執行 2 次 (即 1 秒) 才進行倒數和狀態檢查
             if (tickCount % 2 === 0) {
-                
-                // 執行 1 秒倒數
                 timer--;
                 let m = Math.floor(timer/60);
                 let s = timer%60;
                 document.getElementById('timerDisplay').textContent = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
 
-                // 檢查 WORK 狀態下的語音倒數
                 if (state === 'WORK') {
                     if (timer === 10) speakWithDucking(i18n[currentLang].last_10);
                     if (timer <= 3 && timer > 0) speakWithDucking(timer.toString());
                 }
 
-                // 檢查計時結束的邏輯
                 if (timer <= 0) {
                     if (state === 'READY') enterPhase('WORK');
                     else if (state === 'WORK') enterPhase('REST');
@@ -810,10 +808,29 @@ function tick() {
             applyEffectiveVolume();
 
             const u = new SpeechSynthesisUtterance(text);
-            u.lang = currentLang;
+            
+            // --- 💡 [修正] 針對 iPad 強制選擇語音 ---
+            const voices = window.speechSynthesis.getVoices();
+            let selectedVoice = null;
+            if (currentLang === 'zh-TW') {
+                selectedVoice = voices.find(v => v.name.includes('Meijia') || v.name.includes('Taiwan') || v.lang === 'zh-TW');
+            } else if (currentLang === 'zh-HK') {
+                selectedVoice = voices.find(v => v.name.includes('Sin-ji') || v.name.includes('Hong Kong') || v.lang === 'zh-HK');
+            } else {
+                selectedVoice = voices.find(v => v.lang.startsWith('en'));
+            }
+            if (selectedVoice) { u.voice = selectedVoice; u.lang = selectedVoice.lang; }
+            else { u.lang = currentLang; }
+            // --- [修正結束] ---
+
             u.rate = 1.0;
             u.onend = function() { isDucking = false; applyEffectiveVolume(); };
             window.speechSynthesis.speak(u);
+        }
+
+        // 確保 iPad 載入語音列表
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
         }
 
         function handleAudioAndVoice(ex) {
