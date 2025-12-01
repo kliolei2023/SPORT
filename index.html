@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>獅先生_體育課熱身系統 (iPad 優化版)</title>
+    <title>獅先生_體育課熱身系統 (iPad 終極修復版)</title>
     <style>
         /* --- 🎨 核心變數 & 主題 --- */
         :root {
@@ -190,6 +190,12 @@
         }
         .grade-card:hover { transform: translateY(-10px); border-color: var(--primary); }
 
+        /* 測試按鈕樣式 */
+        .test-voice-btn {
+            margin-top: 10px; padding: 5px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.2); 
+            border: 1px solid white; color: white; border-radius: 20px; cursor: pointer;
+        }
+
         @media (max-width: 1024px) {
             .layout { flex-direction: column; overflow-y: auto; gap: 10px; }
             .sidebar, .queue-panel { width: 100%; }
@@ -201,6 +207,8 @@
     <div class="modal" id="gradeModal">
         <h1 style="color:white; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">🏟️ 體育課堂熱身系統_獅先生</h1>
         <p style="color:rgba(255,255,255,0.9); font-size: 1.1rem;">請老師選擇上課年級</p>
+        
+        <button class="test-voice-btn" onclick="testVoice()">🔊 按我測試有沒有聲音</button>
         
         <div style="margin-top: 20px;">
             <select id="modalLang" onchange="syncLang(this.value)" style="padding: 12px 24px; font-size: 1rem;">
@@ -603,16 +611,15 @@
 
         // --- 4. 初始化 ---
         function selectGrade(grade) {
-            // --- 💡 [修正] 針對 iPad 的解鎖動作 ---
-            // 1. 強制喚醒語音合成引擎
+            // [iPad 修正] 強制喚醒
             if (window.speechSynthesis) {
-                const emptyUtterance = new SpeechSynthesisUtterance(" ");
+                // 嘗試說一個空字元，但為了確保 iPad 真的醒來，我們說個 "Ready"
+                const emptyUtterance = new SpeechSynthesisUtterance("Ready");
+                emptyUtterance.volume = 0.1; // 小聲點
                 window.speechSynthesis.speak(emptyUtterance);
             }
-            // 2. 強制解鎖背景音樂播放器
             workPlayer.play().then(() => workPlayer.pause()).catch(() => {});
             restPlayer.play().then(() => restPlayer.pause()).catch(() => {});
-            // --- [修正結束] ---
 
             initAudio(); 
             currentGrade = grade;
@@ -626,6 +633,32 @@
             restPlayer.src = MUSIC_PRESETS.rest;
             
             setTimeout(updateMixerUI, 100); 
+        }
+
+        // [iPad 修正] 測試語音功能
+        function testVoice() {
+            if (!window.speechSynthesis) {
+                alert("您的裝置不支援語音合成！");
+                return;
+            }
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance("測試成功，聲音正常");
+            
+            // 強制尋找中文語音
+            const voices = window.speechSynthesis.getVoices();
+            let voice = voices.find(v => v.lang.includes('zh-TW')) || 
+                        voices.find(v => v.lang.includes('zh-CN')) || 
+                        voices.find(v => v.lang.includes('zh'));
+            
+            if (voice) u.voice = voice;
+            else u.lang = 'zh-TW';
+
+            u.rate = 1.0;
+            window.speechSynthesis.speak(u);
+            
+            if(voices.length === 0) {
+                alert("警告：尚未偵測到語音列表。請稍後再試，或檢查 iPad 設定 -> 輔助使用 -> 語音內容 -> 聲音");
+            }
         }
 
         function initAudio() {
@@ -652,14 +685,13 @@
             document.getElementById('gradeModal').style.display = 'flex';
         }
 
-        // --- 5. 音樂來源管理 (新功能) ---
+        // --- 5. 音樂來源管理 ---
         function changeMusicSource() {
             const style = document.getElementById('musicPreset').value;
             const uploadPanel = document.getElementById('customUploadPanel');
             
             if (style === 'custom') {
                 uploadPanel.style.display = 'block';
-                // 如果目前沒上傳檔案，暫時不變動 src
             } else {
                 uploadPanel.style.display = 'none';
                 workPlayer.src = MUSIC_PRESETS[style];
@@ -790,7 +822,7 @@
             }
         }
 
-        // --- 7. 音訊與語音 (強制優先) ---
+        // --- 7. 音訊與語音 (重點修復區域) ---
         function applyEffectiveVolume() {
             const userVolMusic = parseFloat(document.getElementById('volMusic').value);
             const userVolRest = parseFloat(document.getElementById('volRest').value);
@@ -809,28 +841,41 @@
 
             const u = new SpeechSynthesisUtterance(text);
             
-            // --- 💡 [修正] 針對 iPad 強制選擇語音 ---
+            // [iPad 修正] 更寬容的語音選擇邏輯 (自動降級)
             const voices = window.speechSynthesis.getVoices();
             let selectedVoice = null;
+            
             if (currentLang === 'zh-TW') {
-                selectedVoice = voices.find(v => v.name.includes('Meijia') || v.name.includes('Taiwan') || v.lang === 'zh-TW');
+                // 1. 優先找台灣
+                selectedVoice = voices.find(v => v.lang === 'zh-TW' || v.name.includes('Meijia') || v.name.includes('Taiwan'));
+                // 2. 找不到就找任何中文 (如 PingFang HK/China)
+                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.startsWith('zh'));
             } else if (currentLang === 'zh-HK') {
-                selectedVoice = voices.find(v => v.name.includes('Sin-ji') || v.name.includes('Hong Kong') || v.lang === 'zh-HK');
+                selectedVoice = voices.find(v => v.lang === 'zh-HK' || v.name.includes('Hong Kong'));
+                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.startsWith('zh'));
             } else {
                 selectedVoice = voices.find(v => v.lang.startsWith('en'));
             }
-            if (selectedVoice) { u.voice = selectedVoice; u.lang = selectedVoice.lang; }
-            else { u.lang = currentLang; }
-            // --- [修正結束] ---
+
+            if (selectedVoice) { 
+                u.voice = selectedVoice; 
+                u.lang = selectedVoice.lang; // 雙重保險
+            } else {
+                // 如果連一個聲音都抓不到，仍然設定語言，祈禱系統預設有效
+                u.lang = currentLang; 
+            }
 
             u.rate = 1.0;
             u.onend = function() { isDucking = false; applyEffectiveVolume(); };
             window.speechSynthesis.speak(u);
         }
 
-        // 確保 iPad 載入語音列表
+        // 確保 iPad 載入語音列表 (這是解決聲音選單空白的關鍵)
         if (window.speechSynthesis) {
-            window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+            window.speechSynthesis.onvoiceschanged = function() { 
+                window.speechSynthesis.getVoices(); 
+                console.log("Voices loaded:", window.speechSynthesis.getVoices().length);
+            };
         }
 
         function handleAudioAndVoice(ex) {
