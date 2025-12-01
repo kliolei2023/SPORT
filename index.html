@@ -1,364 +1,1037 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>獅先生_體育課 (強制大陸普通話版)</title>
+    <title>獅先生_體育課熱身系統 (iPad 終極修復版)</title>
     <style>
-        /* --- 🎨 核心變數 --- */
+        /* --- 🎨 核心變數 & 主題 --- */
         :root {
-            --primary: #6366f1; --bg-grad: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            --glass: rgba(255, 255, 255, 0.95); --text-main: #1f2937; --font-main: "Microsoft JhengHei", "PingFang SC", sans-serif;
+            --primary: #6366f1; --primary-dark: #4f46e5;
+            --accent: #f59e0b; --success: #10b981;
+            --bg-grad: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --glass: rgba(255, 255, 255, 0.95);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --text-main: #1f2937;
+            --input-bg: #ffffff;
+            --input-text: #1f2937;
+            --font-main: "Microsoft JhengHei", "微軟正黑體", sans-serif;
+            --radius: 20px;
         }
-        body.theme-kids { --bg-grad: linear-gradient(120deg, #f6d365 0%, #fda085 100%); --primary: #ff6b6b; }
-        body.theme-junior { --bg-grad: linear-gradient(120deg, #89f7fe 0%, #66a6ff 100%); --primary: #0984e3; }
-        body.theme-teen { --bg-grad: linear-gradient(120deg, #2b32b2 0%, #1488cc 100%); --primary: #00cec9; --text-main: #f3f4f6; }
+
+        /* 年級主題 */
+        body.theme-kids {
+            --bg-grad: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+            --primary: #ff6b6b; --primary-dark: #ee5253;
+            --font-main: "Comic Sans MS", "微軟正黑體", cursive;
+        }
+        body.theme-junior {
+            --bg-grad: linear-gradient(120deg, #89f7fe 0%, #66a6ff 100%);
+            --primary: #0984e3; --primary-dark: #0076d3;
+        }
+        body.theme-teen {
+            --bg-grad: linear-gradient(120deg, #2b32b2 0%, #1488cc 100%);
+            --glass: rgba(16, 24, 39, 0.95);
+            --text-main: #f3f4f6;
+            --input-bg: rgba(255, 255, 255, 0.15); 
+            --input-text: #ffffff;
+            --primary: #00cec9; --primary-dark: #00b894;
+            font-family: 'Segoe UI', sans-serif;
+        }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-main); user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg-grad); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body { background: var(--bg-grad); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; transition: background 1s; }
 
-        /* 🔴 狀態顯示條 */
-        #status-bar {
-            background: #ef4444; color: white; font-size: 0.8rem; padding: 8px; text-align: center;
-            font-weight: bold; width: 100%; z-index: 2000;
+        /* --- 📱 導航列 --- */
+        .navbar {
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.1); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center; z-index: 10;
+        }
+        .nav-btn {
+            background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4);
+            color: var(--text-main); padding: 8px 16px; border-radius: 50px;
+            cursor: pointer; font-weight: bold; transition: 0.3s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.5); transform: scale(1.05); }
+
+        /* --- 📐 佈局架構 --- */
+        .layout { display: flex; flex: 1; height: 100%; overflow: hidden; gap: 20px; padding: 20px; }
+        
+        .panel {
+            background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: var(--glass-border); border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 25px; overflow-y: auto; transition: 0.3s;
         }
 
-        /* 導航與佈局 */
-        .navbar { padding: 10px 20px; background: rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
-        .nav-btn { background: rgba(255,255,255,0.3); border: 1px solid white; padding: 5px 15px; border-radius: 20px; cursor: pointer; }
-        .layout { display: flex; flex: 1; height: 100%; overflow: hidden; gap: 20px; padding: 20px; }
-        .panel { background: var(--glass); border-radius: 20px; padding: 20px; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .sidebar { width: 320px; display: flex; flex-direction: column; gap: 10px; }
-        .main-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .queue-panel { width: 250px; }
-        
-        /* 元件樣式 */
-        select, input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ccc; margin-bottom: 10px; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; background: var(--primary); color: white; }
-        .emoji { font-size: 6rem; display: block; margin: 10px 0; }
-        .timer-box { font-size: 4rem; font-weight: 900; font-family: monospace; }
-        
-        /* 模態框 */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .grade-grid { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
-        .grade-card { background: white; padding: 20px; border-radius: 20px; width: 200px; text-align: center; cursor: pointer; color: #333; }
+        .sidebar { width: 360px; display: flex; flex-direction: column; gap: 15px; }
+        .main-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .queue-panel { width: 280px; }
 
-        @media (max-width: 1024px) { .layout { flex-direction: column; } .sidebar, .queue-panel { width: 100%; } }
+        /* --- 左側控制 --- */
+        h3 { margin-bottom: 10px; font-size: 1.1rem; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 5px; opacity: 0.9; }
+        .control-item { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        
+        select, input[type=number] {
+            width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15);
+            background: var(--input-bg); font-size: 0.95rem; color: var(--input-text); outline: none;
+        }
+        select option { background: #ffffff; color: #333333; }
+
+        /* 時間控制 */
+        .time-box, .mixer-box {
+            background: rgba(0,0,0,0.08); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
+        }
+        .radio-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .radio-label { 
+            flex: 1; text-align: center; padding: 8px; background: rgba(255,255,255,0.3); 
+            border-radius: 8px; cursor: pointer; font-size: 0.85rem; border: 1px solid transparent;
+        }
+        .radio-label:hover { background: rgba(255,255,255,0.6); }
+        input[type="radio"] { display: none; }
+        input[type="radio"]:checked + .radio-label {
+            background: var(--primary); color: white; border-color: var(--primary-dark);
+        }
+
+        /* 混音滑桿 */
+        .mixer-row { margin-bottom: 12px; }
+        .mixer-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: var(--primary); height: 6px; }
+
+        .file-upload-box { margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 8px; display: none; }
+        .file-label { font-size: 0.8rem; display: block; margin-bottom: 3px; color: var(--primary-dark); }
+        input[type="file"] { font-size: 0.8rem; width: 100%; }
+        
+        .btn-clear {
+            background: #ef4444; color: white; padding: 5px 10px; border-radius: 5px; border: none; font-size: 0.8rem; cursor: pointer; margin-top: 10px; width: 100%;
+        }
+        .btn-clear:hover { background: #dc2626; }
+
+        /* 按鈕 */
+        .btn {
+            width: 100%; padding: 12px; border: none; border-radius: 12px;
+            font-size: 1rem; font-weight: 800; cursor: pointer;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            transition: all 0.2s; margin-top: 5px;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-repeat { background: linear-gradient(135deg, var(--accent), #d97706); color: white; display: none; }
+        .btn-secondary { background: rgba(0,0,0,0.1); color: var(--text-main); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(1); transform: none; }
+
+        /* --- 主舞台 --- */
+        .phase-pill {
+            padding: 8px 20px; border-radius: 50px; font-weight: 900; font-size: 1.2rem;
+            margin-bottom: 20px; letter-spacing: 1px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            background: white;
+        }
+        .phase-ready { color: #1e40af; border: 3px solid #3b82f6; }
+        .phase-work { color: #dc2626; border: 3px solid #f87171; }
+        .phase-rest { color: #059669; border: 3px solid #34d399; }
+        .phase-done { color: #d97706; border: 3px solid #f59e0b; }
+
+        .visual-card {
+            width: 300px; height: 300px; background: rgba(255,255,255,0.95); border-radius: 40px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15); position: relative; transition: all 0.3s;
+            border: 8px solid transparent;
+        }
+        .visual-card[data-state="READY"] { border-color: #3b82f6; animation: pulse 1s infinite; }
+        .visual-card[data-state="WORK"] { border-color: #ef4444; }
+        .visual-card[data-state="REST"] { border-color: #10b981; filter: grayscale(0.5); transform: scale(0.95); }
+
+        .emoji { font-size: 6rem; line-height: 1; margin-bottom: 10px; }
+        .anim-bounce { animation: bounce 0.8s infinite; }
+        .anim-rock { animation: rock 2s infinite ease-in-out; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes rock { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .timer-box { 
+            font-size: 5rem; font-weight: 900; font-family: 'Courier New', monospace; 
+            background: -webkit-linear-gradient(45deg, var(--text-main), var(--primary)); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin: 5px 0;
+        }
+        
+        .ex-title { 
+            font-size: 2rem; font-weight: 800; text-align: center; line-height: 1.2; margin-bottom: 10px; white-space: pre-wrap;
+        }
+        .ex-desc {
+            background: rgba(255,255,255,0.7); padding: 20px 30px; border-radius: 15px;
+            font-size: 1.2rem; text-align: center; max-width: 700px; line-height: 1.6;
+            border-left: 6px solid var(--primary); font-weight: 600; white-space: pre-wrap;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        /* --- 清單 --- */
+        .queue-list { list-style: none; padding-bottom: 20px; }
+        .queue-item {
+            padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 10px; border-radius: 10px; margin-bottom: 4px; font-size: 0.95rem;
+        }
+        .queue-item.active { background: white; font-weight: bold; border-left: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .queue-item.done { opacity: 0.5; }
+        .queue-num { background: rgba(0,0,0,0.1); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; }
+
+        /* --- 模態框 --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .grade-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; width: 90%; max-width: 800px; margin-top: 30px; }
+        .grade-card {
+            background: white; padding: 30px 20px; border-radius: 25px; text-align: center; cursor: pointer;
+            transition: 0.3s; border: 4px solid transparent; color: #333;
+        }
+        .grade-card:hover { transform: translateY(-10px); border-color: var(--primary); }
+
+        /* 測試按鈕樣式 */
+        .test-voice-btn {
+            margin-top: 10px; padding: 5px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.2); 
+            border: 1px solid white; color: white; border-radius: 20px; cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .layout { flex-direction: column; overflow-y: auto; gap: 10px; }
+            .sidebar, .queue-panel { width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="status-bar">正在搜尋 iPad 上的大陸普通話語音...</div>
-
     <div class="modal" id="gradeModal">
-        <h1 style="color:white;">🦁 體育課 (強制大陸普通話版)</h1>
+        <h1 style="color:white; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">🏟️ 體育課堂熱身系統_獅先生</h1>
+        <p style="color:rgba(255,255,255,0.9); font-size: 1.1rem;">請老師選擇上課年級</p>
         
-        <div style="margin: 30px 0;">
-             <button onclick="forceUnlock()" style="padding:15px 30px; font-size:1.3rem; background:#facc15; border:none; border-radius:50px; font-weight:bold; box-shadow: 0 0 20px rgba(250, 204, 21, 0.5); cursor: pointer;">
-                🔊 點我測試聲音 (必須點擊)
-             </button>
+        <button class="test-voice-btn" onclick="testVoice()">🔊 按我測試有沒有聲音</button>
+        
+        <div style="margin-top: 20px;">
+            <select id="modalLang" onchange="syncLang(this.value)" style="padding: 12px 24px; font-size: 1rem;">
+                <option value="zh-TW">普通話 (Mandarin)</option>
+                <option value="zh-HK">廣東話 (Cantonese)</option>
+                <option value="en-US">English (English)</option>
+            </select>
         </div>
-        <p style="color:#eee; font-size: 1.1rem;">請先點擊黃色按鈕，聽到「測試成功」後再選年級</p>
 
         <div class="grade-grid">
-            <div class="grade-card" onclick="selectGrade('kids')">🐣 P1-P3 (初小)</div>
-            <div class="grade-card" onclick="selectGrade('junior')">🏃 P4-P6 (高小)</div>
-            <div class="grade-card" onclick="selectGrade('teen')">🏅 S1-S6 (中學)</div>
+            <div class="grade-card" onclick="selectGrade('kids')">
+                <div style="font-size: 3rem;">🐣</div>
+                <h3>P1-P3 (初小)</h3>
+                <p>趣味模仿、大肌肉協調</p>
+            </div>
+            <div class="grade-card" onclick="selectGrade('junior')">
+                <div style="font-size: 3rem;">🏃</div>
+                <h3>P4-P6 (高小)</h3>
+                <p>動作規範、節奏感</p>
+            </div>
+            <div class="grade-card" onclick="selectGrade('teen')">
+                <div style="font-size: 3rem;">🏅</div>
+                <h3>S1-S6 (中學)</h3>
+                <p>功能性訓練、爆發力</p>
+            </div>
         </div>
     </div>
 
     <div id="appContainer" style="display: none; height: 100%; flex-direction: column;">
         <nav class="navbar">
-            <button class="nav-btn" onclick="location.reload()">↩️ 重整</button>
-            <div style="font-weight:900;">體育課</div>
+            <button class="nav-btn" onclick="goBack()">↩️ 重選</button>
+            <div style="font-weight:900; font-size:1.2rem; opacity:0.8;">體育課</div>
+            <select class="nav-btn" id="mainLang" onchange="syncLang(this.value)" style="width:auto; border:none;">
+                <option value="zh-TW">普通話</option>
+                <option value="zh-HK">廣東話</option>
+                <option value="en-US">English</option>
+            </select>
         </nav>
 
         <div class="layout">
             <aside class="sidebar panel">
-                <h3>設定</h3>
-                <label>動作數量</label>
-                <select id="exCount"><option value="6">6 個</option><option value="8">8 個</option></select>
-                <label>總時長 (分鐘)</label>
-                <select id="totalDuration" onchange="updateEstimates()"><option value="3">3 分鐘</option><option value="5" selected>5 分鐘</option></select>
-                <div style="font-size:0.8rem; margin-bottom:10px;" id="timeEst"></div>
+                <h3>⚙️ 設定</h3>
                 
-                <h3>音樂</h3>
-                <select id="musicPreset" onchange="changeMusic()">
-                    <option value="default">預設 House</option>
-                    <option value="happy">開心 Ukulele</option>
-                    <option value="none">不播放音樂</option>
-                </select>
+                <div class="control-item">
+                    <label>🎯 訓練部位</label>
+                    <select id="bodyPart">
+                        <option value="full">全身綜合 (Full Body)</option>
+                        <option value="upper">上肢 (Upper)</option>
+                        <option value="lower">下肢 (Lower)</option>
+                        <option value="core">核心 (Core)</option>
+                    </select>
+                </div>
 
-                <button class="btn" id="startBtn" onclick="startWorkout()">🚀 開始訓練</button>
-                <button class="btn" id="pauseBtn" onclick="togglePause()" disabled style="background:#999;">暫停</button>
+                <div class="control-item">
+                    <label>🔢 動作數量</label>
+                    <select id="exCount" onchange="updateTotalEstimate()">
+                        <option value="4">4 個</option>
+                        <option value="6" selected>6 個</option>
+                        <option value="8">8 個</option>
+                        <option value="12">12 個</option>
+                    </select>
+                </div>
+
+                <h3>⏱️ 時間控制</h3>
+                <div class="time-box">
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="timeMode" value="total" checked onchange="toggleTimeMode()">
+                            <div class="radio-label">總時間模式</div>
+                        </label>
+                        <label>
+                            <input type="radio" name="timeMode" value="custom" onchange="toggleTimeMode()">
+                            <div class="radio-label">自定義調整</div>
+                        </label>
+                    </div>
+
+                    <div id="totalTimePanel">
+                        <label style="font-size:0.8rem;">⏳ 總時長</label>
+                        <select id="totalDuration" onchange="updateTotalEstimate()">
+                            <option value="3">3 分鐘 (快速)</option>
+                            <option value="5" selected>5 分鐘 (標準)</option>
+                            <option value="8">8 分鐘 (完整)</option>
+                            <option value="10">10 分鐘 (加長)</option>
+                        </select>
+                        <div id="autoTimeDisplay" style="margin-top:5px; font-size:0.8rem; opacity:0.7;">
+                            預估: 運動 35s / 休息 15s
+                        </div>
+                    </div>
+
+                    <div id="customTimePanel" style="display:none;">
+                        <div class="range-wrap">
+                            <div class="range-header"><span>🔥 運動</span> <span id="valWork">30s</span></div>
+                            <input type="range" id="rngWork" min="10" max="90" step="5" value="30" oninput="updateCustomDisplay()">
+                        </div>
+                        <div class="range-wrap">
+                            <div class="range-header"><span>💚 休息</span> <span id="valRest">15s</span></div>
+                            <input type="range" id="rngRest" min="5" max="60" step="5" value="15" oninput="updateCustomDisplay()">
+                        </div>
+                    </div>
+                </div>
+
+                <h3>🎛️ 獨立混音台 (Mixer)</h3>
+                <div class="mixer-box">
+                    <label style="margin-bottom:5px;">🎵 音樂風格 (可選):</label>
+                    <select id="musicPreset" onchange="changeMusicSource()">
+                        <option value="default">沒有音樂</option>
+                        <option value="energy">激動 (Energy)</option>
+                        <option value="happy">開心 (Happy)</option>
+                        <option value="game">電玩 (8-Bit)</option>
+                        <option value="custom">📂 上傳 (Custom)</option>
+                    </select>
+
+                    <div id="customUploadPanel" class="file-upload-box">
+                        <span class="file-label">🔥 運動時 (Work MP3):</span>
+                        <input type="file" id="uploadWork" accept="audio/*">
+                        <span class="file-label" style="margin-top:8px;">💚 休息時 (Rest MP3):</span>
+                        <input type="file" id="uploadRest" accept="audio/*">
+                        <button class="btn-clear" onclick="clearCustomMusic()">🗑️ 清除上傳並還原預設</button>
+                    </div>
+
+                    <div style="margin-top:15px; border-top:1px solid rgba(0,0,0,0.1); padding-top:10px;">
+                        <div class="mixer-row">
+                            <div class="mixer-label"><span>🔥 運動音樂</span> <span id="lblVolMusic">50%</span></div>
+                            <input type="range" id="volMusic" min="0" max="1" step="0.05" value="0.5" oninput="updateMixerUI()">
+                        </div>
+                        <div class="mixer-row">
+                            <div class="mixer-label"><span>💚 休息音樂</span> <span id="lblVolRest">50%</span></div>
+                            <input type="range" id="volRest" min="0" max="1" step="0.05" value="0.5" oninput="updateMixerUI()">
+                        </div>
+                        <div class="mixer-row">
+                            <div class="mixer-label">
+                                <span>
+                                    <input type="checkbox" id="checkMetro" checked onchange="toggleMetronomeCheck()" style="margin-right:5px; vertical-align:middle;">
+                                    ⏱️ 節拍器 (Beep)
+                                </span> 
+                                <span id="lblVolMetro">50%</span>
+                            </div>
+                            <input type="range" id="volMetro" min="0" max="1" step="0.05" value="0.5" oninput="updateMixerUI()">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <button class="btn btn-primary" id="startBtn" onclick="startWorkout(true)">
+                        <span>🚀 開始訓練</span>
+                    </button>
+                    <button class="btn btn-repeat" id="repeatBtn" onclick="repeatWorkout()">
+                        <span>🔄 重做這一套</span>
+                    </button>
+
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="btn btn-secondary" id="pauseBtn" onclick="togglePause()" disabled>暫停</button>
+                        <button class="btn btn-secondary" onclick="resetSystem()">重置</button>
+                    </div>
+                </div>
             </aside>
 
             <main class="main-stage">
-                <div style="font-size:1.5rem; font-weight:bold; color:var(--primary);" id="phaseText">READY</div>
-                <div class="emoji" id="mainIcon">🧘</div>
+                <div class="phase-pill phase-rest" id="phasePill">READY</div>
+                <div class="visual-card" id="visualCard" data-state="IDLE">
+                    <div class="emoji" id="mainEmoji">🧘</div>
+                </div>
                 <div class="timer-box" id="timerDisplay">00:00</div>
-                <h2 id="exName">準備開始</h2>
-                <p id="exDesc" style="padding:10px; background:rgba(255,255,255,0.5); border-radius:10px;">請調整音量並確認關閉靜音模式</p>
+                <div class="ex-title" id="exName">準備開始</div>
+                <div class="ex-desc" id="exDesc">系統流程：👀 預備(5s) ➔ 🔥 運動+講解 ➔ 💚 休息</div>
             </main>
-            
+
             <aside class="queue-panel panel">
-                <ul id="queueList" style="list-style:none;"></ul>
+                <h3>📋 動作清單</h3>
+                <ul class="queue-list" id="queueList"></ul>
             </aside>
         </div>
     </div>
 
-    <audio id="bgm" loop playsinline></audio>
+    <audio id="audioWorkPlayer" loop playsinline></audio>
+    <audio id="audioRestPlayer" loop playsinline></audio>
 
     <script>
-        // --- 1. 資料庫 (簡化範例，可替換回您的完整資料) ---
+        // --- 1. 翻譯字典 ---
+        const i18n = {
+            'zh-TW': {
+                ready: "準備開始", work: "運動開始", rest: "休息時間", done: "訓練完成",
+                rest_desc: "調整呼吸，準備下一個動作", done_desc: "太棒了！大家辛苦了！",
+                last_10: "最後十秒", start_voice: "下一個動作是", rest_voice: "休息時間"
+            },
+            'zh-HK': {
+                ready: "準備開始", work: "運動開始", rest: "休息時間", done: "訓練完成",
+                rest_desc: "調整呼吸，準備下一個動作", done_desc: "好極了！大家辛苦了！",
+                last_10: "最後十秒", start_voice: "下一個動作係", rest_voice: "休息時間"
+            },
+            'en-US': {
+                ready: "Get Ready", work: "Work", rest: "Rest", done: "Done",
+                rest_desc: "Catch your breath, get ready for next move.", done_desc: "Great job! Workout complete.",
+                last_10: "Last 10 seconds", start_voice: "Next move is", rest_voice: "Rest time"
+            }
+        };
+
+        // --- 2. 資料庫 (完整 150 個動作) ---
         const db = {
             kids: [
-                {name: "大風車轉轉", desc: "雙臂伸直向前畫大圓圈", icon: "🌬️"},
-                {name: "長頸鹿摘蘋果", desc: "踮起腳尖盡力向上伸直", icon: "🦒"},
-                {name: "機器人敬禮", desc: "手臂僵硬地彎曲伸直", icon: "🤖"},
-                {name: "小鳥拍拍翅", desc: "像翅膀一樣上下拍動", icon: "🐦"},
-                {name: "大猩猩搥胸", desc: "輕輕交替拍打胸口", icon: "🦍"},
-                {name: "星星跳", desc: "跳起時手腳大張像星星", icon: "⭐"}
+                // 👐 上肢 (12)
+                { name: {"zh-TW":"大風車轉轉","zh-HK":"大風車轉轉","en-US":"Windmill Arms"}, part:"upper", icon:"🌬️", desc: {"zh-TW":"雙臂伸直，像風車葉片一樣向前畫大圓圈，速度要慢，手臂貼近耳朵。","zh-HK":"雙臂伸直，像風車葉片一樣向前畫大圓圈，速度要慢，手臂貼近耳朵。","en-US":"Keep arms straight, draw big circles forward like a windmill, slow speed, arms close to ears."} },
+                { name: {"zh-TW":"倒轉時光機","zh-HK":"倒轉時光機","en-US":"Backstroke Arms"}, part:"upper", icon:"🏊", desc: {"zh-TW":"雙臂伸直，向後畫大圓圈，感覺像在遊背泳，胸口要打開。","zh-HK":"雙臂伸直，向後畫大圓圈，感覺像在遊背泳，胸口要打開。","en-US":"Arms straight, circle backwards like swimming backstroke, open your chest."} },
+                { name: {"zh-TW":"長頸鹿摘蘋果","zh-HK":"長頸鹿摘蘋果","en-US":"Giraffe Reach"}, part:"upper", icon:"🦒", desc: {"zh-TW":"踮起腳尖，雙手輪流盡力向上伸直，視線看手，想像去抓天空最高的蘋果。","zh-HK":"踮起腳尖，雙手輪流盡力向上伸直，視線看手，想像去抓天空最高的蘋果。","en-US":"Stand on tiptoes, alternate reaching hands up high, look at hands, imagine picking the highest apple."} },
+                { name: {"zh-TW":"小鳥拍拍翅","zh-HK":"小鳥拍拍翅","en-US":"Bird Flap"}, part:"upper", icon:"🐦", desc: {"zh-TW":"手臂側平舉，手掌向下，像翅膀一樣上下快速小幅度拍動，肩膀要用力。","zh-HK":"手臂側平舉，手掌向下，像翅膀一樣上下快速小幅度拍動，肩膀要用力。","en-US":"Arms out to side, palms down, flap quickly like bird wings, engage shoulders."} },
+                { name: {"zh-TW":"大猩猩搥胸","zh-HK":"大猩猩搥胸","en-US":"Gorilla Tap"}, part:"upper", icon:"🦍", desc: {"zh-TW":"雙手握空拳，輕輕交替拍打胸口（鎖骨下方），發出聲音增加樂趣，挺胸不駝背。","zh-HK":"雙手握空拳，輕輕交替拍打胸口（鎖骨下方），發出聲音增加樂趣，挺胸不駝背。","en-US":"Lightly tap chest below collarbone with loose fists, stand tall."} },
+                { name: {"zh-TW":"大力士切西瓜","zh-HK":"大力士切西瓜","en-US":"Watermelon Chop"}, part:"upper", icon:"🍉", desc: {"zh-TW":"雙手合十舉高過頭，用力向下劈到肚子前，動作要乾脆有力。","zh-HK":"雙手合十舉高過頭，用力向下劈到肚子前，動作要乾脆有力。","en-US":"Hands together overhead, chop down forcefully to stomach level."} },
+                { name: {"zh-TW":"轉動門把","zh-HK":"轉動門把","en-US":"Doorknob Turn"}, part:"upper", icon:"🚪", desc: {"zh-TW":"手臂側平舉，轉動手腕（像轉門把），手臂保持不動，只動手腕。","zh-HK":"手臂側平舉，轉動手腕（像轉門把），手臂保持不動，只動手腕。","en-US":"Arms to side, rotate wrists like turning a doorknob, keep arms still."} },
+                { name: {"zh-TW":"舉起大石頭","zh-HK":"舉起大石頭","en-US":"Rock Lift"}, part:"upper", icon:"🪨", desc: {"zh-TW":"雙腳蹲下，雙手假裝抓地，吸氣時用力把「隱形石頭」舉過頭頂，站直身體。","zh-HK":"雙腳蹲下，雙手假裝抓地，吸氣時用力把「隱形石頭」舉過頭頂，站直身體。","en-US":"Squat, pretend to grab a rock, inhale and lift 'invisible rock' overhead while standing up."} },
+                { name: {"zh-TW":"雨刷擺動","zh-HK":"雨刷擺動","en-US":"Wiper Arms"}, part:"upper", icon:"🚗", desc: {"zh-TW":"雙手舉高過頭，左右揮動，身體跟著輕微擺動，像車窗雨刷。","zh-HK":"雙手舉高過頭，左右揮動，身體跟著輕微擺動，像車窗雨刷。","en-US":"Hands overhead, wave left and right like windshield wipers, sway body slightly."} },
+                { name: {"zh-TW":"機器人敬禮","zh-HK":"機器人敬禮","en-US":"Robot Salute"}, part:"upper", icon:"🤖", desc: {"zh-TW":"手臂僵硬地彎曲、伸直，模仿機器人動作，訓練關節控制。","zh-HK":"手臂僵硬地彎曲、伸直，模仿機器人動作，訓練關節控制。","en-US":"Move arms stiffly, bending and straightening like a robot to train joint control."} },
+                { name: {"zh-TW":"抱抱大樹","zh-HK":"抱抱大樹","en-US":"Tree Hug"}, part:"upper", icon:"🌳", desc: {"zh-TW":"雙臂張開到最大（吸氣），然後用力環抱胸前拱背（吐氣），拉伸背部。","zh-HK":"雙臂張開到最大（吸氣），然後用力環抱胸前拱背（吐氣），拉伸背部。","en-US":"Open arms wide (inhale), then hug chest tight and round back (exhale) to stretch."} },
+                { name: {"zh-TW":"拳擊手防禦","zh-HK":"拳擊手防禦","en-US":"Boxer Guard"}, part:"upper", icon:"🥊", desc: {"zh-TW":"雙手握拳放在臉頰旁邊，手肘夾緊身體，像在保護臉部。","zh-HK":"雙手握拳放在臉頰旁邊，手肘夾緊身體，像在保護臉部。","en-US":"Fists by cheeks, elbows tucked in, guarding the face."} },
+                // 🦵 下肢 (12)
+                { name: {"zh-TW":"空中踩單車","zh-HK":"空中踩單車","en-US":"Air Cycling"}, part:"lower", icon:"🚲", desc: {"zh-TW":"躺在地上，雙腳抬起，在空中輪流畫圈圈，膝蓋要彎曲。","zh-HK":"躺在地上，雙腳抬起，在空中輪流畫圈圈，膝蓋要彎曲。","en-US":"Lie down, lift legs, circle feet in air like cycling, knees bent."} },
+                { name: {"zh-TW":"小矮人踏步","zh-HK":"小矮人踏步","en-US":"Dwarf March"}, part:"lower", icon:"👣", desc: {"zh-TW":"蹲低身體（半蹲），雙手扶膝蓋，在原地踏步，屁股不能翹太高。","zh-HK":"蹲低身體（半蹲），雙手扶膝蓋，在原地踏步，屁股不能翹太高。","en-US":"Half squat, hands on knees, march in place, keep hips low."} },
+                { name: {"zh-TW":"紅鶴單腳站","zh-HK":"紅鶴單腳站","en-US":"Flamingo Stand"}, part:"lower", icon:"🦩", desc: {"zh-TW":"單腳站立，雙手張開像翅膀保持平衡，另一腳縮在膝蓋旁，數到10。","zh-HK":"單腳站立，雙手張開像翅膀保持平衡，另一腳縮在膝蓋旁，數到10。","en-US":"Stand on one leg, arms out for balance, tuck other foot by knee, count to 10."} },
+                { name: {"zh-TW":"輕輕踢足球","zh-HK":"輕輕踢足球","en-US":"Gentle Kick"}, part:"lower", icon:"⚽", desc: {"zh-TW":"原地向「前」踢腿，放鬆小腿，像把球踢出去，腳尖向下壓。","zh-HK":"原地向「前」踢腿，放鬆小腿，像把球踢出去，腳尖向下壓。","en-US":"Kick forward gently, relax calves, point toes down like kicking a ball."} },
+                { name: {"zh-TW":"小馬後踢腿","zh-HK":"小馬後踢腿","en-US":"Pony Kick"}, part:"lower", icon:"🐎", desc: {"zh-TW":"原地向「後」踢腿，腳跟試著碰到自己的屁股，膝蓋朝下。","zh-HK":"原地向「後」踢腿，腳跟試著碰到自己的屁股，膝蓋朝下。","en-US":"Kick backward, heels try to touch glutes, keep knees pointing down."} },
+                { name: {"zh-TW":"企鵝走路","zh-HK":"企鵝走路","en-US":"Penguin Walk"}, part:"lower", icon:"🐧", desc: {"zh-TW":"腳跟併攏，腳尖分開（外八字），膝蓋微彎，原地左右搖擺踏步。","zh-HK":"腳跟併攏，腳尖分開（外八字），膝蓋微彎，原地左右搖擺踏步。","en-US":"Heels together, toes apart, knees bent, waddle side to side in place."} },
+                { name: {"zh-TW":"彈簧膝蓋","zh-HK":"彈簧膝蓋","en-US":"Spring Knees"}, part:"lower", icon:"🌀", desc: {"zh-TW":"腳掌不離地，膝蓋做快速微蹲、彈起的動作，身體跟著上下震動。","zh-HK":"腳掌不離地，膝蓋做快速微蹲、彈起的動作，身體跟著上下震動。","en-US":"Feet flat, bounce knees quickly up and down."} },
+                { name: {"zh-TW":"芭蕾舞腳尖","zh-HK":"芭蕾舞腳尖","en-US":"Ballet Toes"}, part:"lower", icon:"🩰", desc: {"zh-TW":"雙腳併攏，用力踮起腳尖，身體向上拉長，維持3秒再落下。","zh-HK":"雙腳併攏，用力踮起腳尖，身體向上拉長，維持3秒再落下。","en-US":"Feet together, tiptoe high, stretch body up, hold 3s then drop."} },
+                { name: {"zh-TW":"相撲大力士","zh-HK":"相撲大力士","en-US":"Sumo Stomp"}, part:"lower", icon:"🥋", desc: {"zh-TW":"雙腳打開寬於肩膀，半蹲，雙手用力按住膝蓋內側，挺胸。","zh-HK":"雙腳打開寬於肩膀，半蹲，雙手用力按住膝蓋內側，挺胸。","en-US":"Wide stance, half squat, hands press inner knees, chest up."} },
+                { name: {"zh-TW":"單腳跳房子","zh-HK":"單腳跳房子","en-US":"Hopscotch"}, part:"lower", icon:"🦶", desc: {"zh-TW":"單腳原地輕輕跳躍5下，保持平衡不跌倒，換腳做。","zh-HK":"單腳原地輕輕跳躍5下，保持平衡不跌倒，換腳做。","en-US":"Hop on one foot 5 times, balance, then switch."} },
+                { name: {"zh-TW":"小狗撒尿","zh-HK":"小狗撒尿","en-US":"Dog Peeing"}, part:"lower", icon:"🐕", desc: {"zh-TW":"雙手叉腰，單腿向側面抬起，膝蓋彎曲，保持身體正直。","zh-HK":"雙手叉腰，單腿向側面抬起，膝蓋彎曲，保持身體正直。","en-US":"Hands on hips, lift one bent leg to side, keep body straight."} },
+                { name: {"zh-TW":"剪刀腳交叉","zh-HK":"剪刀腳交叉","en-US":"Scissor Legs"}, part:"lower", icon:"✂️", desc: {"zh-TW":"雙腳站立，跳起時雙腳交叉（右腳在前、左腳在後），再換邊。","zh-HK":"雙腳站立，跳起時雙腳交叉（右腳在前、左腳在後），再換邊。","en-US":"Jump and cross legs (right front, left back), then switch."} },
+                // ✨ 綜合 (13)
+                { name: {"zh-TW":"星星跳","zh-HK":"星星跳","en-US":"Star Jump"}, part:"full", icon:"⭐", desc: {"zh-TW":"先蹲下縮成一小球，跳起時手腳瞬間大張像星星，落地輕盈。","zh-HK":"先蹲下縮成一小球，跳起時手腳瞬間大張像星星，落地輕盈。","en-US":"Crouch small, explode into a star shape, land softly."} },
+                { name: {"zh-TW":"兔子跳","zh-HK":"兔子跳","en-US":"Bunny Hop"}, part:"full", icon:"🐰", desc: {"zh-TW":"手放在頭上做耳朵，雙腳併攏，膝蓋微彎，前後左右輕輕小跳。","zh-HK":"手放在頭上做耳朵，雙腳併攏，膝蓋微彎，前後左右輕輕小跳。","en-US":"Hands as ears, feet together, knees bent, hop small jumps."} },
+                { name: {"zh-TW":"青蛙跳","zh-HK":"青蛙跳","en-US":"Frog Jump"}, part:"full", icon:"🐸", desc: {"zh-TW":"雙腳寬蹲手觸地，跳起時雙手舉高大叫「呱」，落地要回到蹲姿。","zh-HK":"雙腳寬蹲手觸地，跳起時雙手舉高大叫「呱」，落地要回到蹲姿。","en-US":"Deep squat hands down, jump up hands high, land back in squat."} },
+                { name: {"zh-TW":"滑雪高手","zh-HK":"滑雪高手","en-US":"Skier Jump"}, part:"full", icon:"⛷️", desc: {"zh-TW":"雙腳併攏，想像地上有一條線，左右來回跳過這條線，膝蓋要軟。","zh-HK":"雙腳併攏，想像地上有一條線，左右來回跳過這條線，膝蓋要軟。","en-US":"Feet together, hop side to side over imaginary line, soft knees."} },
+                { name: {"zh-TW":"木頭人轉身","zh-HK":"木頭人轉身","en-US":"Statue Turn"}, part:"full", icon:"🗿", desc: {"zh-TW":"跳起來在空中轉半圈（180度），落地後要像木頭人一樣完全不動。","zh-HK":"跳起來在空中轉半圈（180度），落地後要像木頭人一樣完全不動。","en-US":"Jump 180 turn, freeze like a statue upon landing."} },
+                { name: {"zh-TW":"飛機起飛","zh-HK":"飛機起飛","en-US":"Airplane Fly"}, part:"full", icon:"✈️", desc: {"zh-TW":"單腳站立，身體向前傾，雙手側平舉，保持背部平直像飛機。","zh-HK":"單腳站立，身體向前傾，雙手側平舉，保持背部平直像飛機。","en-US":"One leg stand, lean forward, arms out like wings, flat back."} },
+                { name: {"zh-TW":"小丑開合跳","zh-HK":"小丑開合跳","en-US":"Clown Jacks"}, part:"full", icon:"🤡", desc: {"zh-TW":"雙腳跳開，雙手在頭頂擊掌；雙腳併攏，雙手拍大腿。","zh-HK":"雙腳跳開，雙手在頭頂擊掌；雙腳併攏，雙手拍大腿。","en-US":"Jump feet apart clap overhead, jump feet together clap thighs."} },
+                { name: {"zh-TW":"超級瑪利歐","zh-HK":"超級瑪利歐","en-US":"Super Mario"}, part:"full", icon:"🍄", desc: {"zh-TW":"單手向上衝拳，同時同側腳向上跳起，像頂磚塊一樣。","zh-HK":"單手向上衝拳，同時同側腳向上跳起，像頂磚塊一樣。","en-US":"Punch up one hand, jump up same knee, like hitting a block."} },
+                { name: {"zh-TW":"喪屍走路","zh-HK":"喪屍走路","en-US":"Zombie Walk"}, part:"full", icon:"🧟", desc: {"zh-TW":"雙手平舉向前，直腿踢高，試著用腳尖碰到手指頭，膝蓋不彎曲。","zh-HK":"雙手平舉向前，直腿踢高，試著用腳尖碰到手指頭，膝蓋不彎曲。","en-US":"Arms forward, kick straight legs up to touch fingers."} },
+                { name: {"zh-TW":"爆米花跳","zh-HK":"爆米花跳","en-US":"Popcorn Jump"}, part:"full", icon:"🍿", desc: {"zh-TW":"全身放鬆，隨意快速地小幅度抖動跳躍，像爆米花在鍋裡跳。","zh-HK":"全身放鬆，隨意快速地小幅度抖動跳躍，像爆米花在鍋裡跳。","en-US":"Relax body, shake and jump quickly like popcorn popping."} },
+                { name: {"zh-TW":"忍者跑","zh-HK":"忍者跑","en-US":"Ninja Run"}, part:"full", icon:"🥷", desc: {"zh-TW":"原地快速小碎步跑，腳尖著地，動作要輕，不能發出聲音。","zh-HK":"原地快速小碎步跑，腳尖著地，動作要輕，不能發出聲音。","en-US":"Fast quiet steps on tiptoes, no sound like a ninja."} },
+                { name: {"zh-TW":"影子拳擊","zh-HK":"影子拳擊","en-US":"Shadow Boxing"}, part:"full", icon:"👊", desc: {"zh-TW":"雙腳前後輕輕跳動，同時向前方出拳，手腳配合要有節奏。","zh-HK":"雙腳前後輕輕跳動，同時向前方出拳，手腳配合要有節奏。","en-US":"Bounce feet, punch forward rhythmically."} },
+                { name: {"zh-TW":"爬繩子","zh-HK":"爬繩子","en-US":"Rope Climb"}, part:"full", icon:"🧗", desc: {"zh-TW":"原地做高抬腿，雙手輪流向上抓隱形的繩子往下拉。","zh-HK":"原地做高抬腿，雙手輪流向上抓隱形的繩子往下拉。","en-US":"High knees, alternate hands climbing an invisible rope."} },
+                // 🧘 核心 (13)
+                { name: {"zh-TW":"不倒翁","zh-HK":"不倒翁","en-US":"Roly Poly"}, part:"core", icon:"🧸", desc: {"zh-TW":"坐在地上抱住膝蓋，背部拱圓向後滾動，再利用腹部力量滾回坐姿。","zh-HK":"坐在地上抱住膝蓋，背部拱圓向後滾動，再利用腹部力量滾回坐姿。","en-US":"Sit hugging knees, roll back and forth using core."} },
+                { name: {"zh-TW":"洗衣機轉轉","zh-HK":"洗衣機轉轉","en-US":"Washing Machine"}, part:"core", icon:"🧺", desc: {"zh-TW":"站立，雙手搭在肩膀上，下半身不動，上半身左右轉動。","zh-HK":"站立，雙手搭在肩膀上，下半身不動，上半身左右轉動。","en-US":"Stand, hands on shoulders, twist upper body left/right."} },
+                { name: {"zh-TW":"香蕉人","zh-HK":"香蕉人","en-US":"Banana Bend"}, part:"core", icon:"🍌", desc: {"zh-TW":"雙腳併攏，雙手合十舉高，身體向左/右側彎，像香蕉的形狀。","zh-HK":"雙腳併攏，雙手合十舉高，身體向左/右側彎，像香蕉的形狀。","en-US":"Feet together, hands high, bend side to side like a banana."} },
+                { name: {"zh-TW":"撿貝殼","zh-HK":"撿貝殼","en-US":"Shell Picking"}, part:"core", icon:"🐚", desc: {"zh-TW":"站立不動，彎腰右手去碰左腳尖，站直後換左手碰右腳尖。","zh-HK":"站立不動，彎腰右手去碰左腳尖，站直後換左手碰右腳尖。","en-US":"Bend to touch opposite toe, stand up, switch sides."} },
+                { name: {"zh-TW":"超人飛","zh-HK":"超人飛","en-US":"Superman Fly"}, part:"core", icon:"🦸", desc: {"zh-TW":"趴在地上，肚子貼地，手和腳同時抬起離開地面，像超人飛行。","zh-HK":"趴在地上，肚子貼地，手和腳同時抬起離開地面，像超人飛行。","en-US":"Lie on belly, lift arms and legs off ground like flying."} },
+                { name: {"zh-TW":"小船搖搖","zh-HK":"小船搖搖","en-US":"Boat Rock"}, part:"core", icon:"🛶", desc: {"zh-TW":"坐在地上，手和腳抬起離地，只有屁股著地，保持平衡不倒下。","zh-HK":"坐在地上，手和腳抬起離地，只有屁股著地，保持平衡不倒下。","en-US":"Sit on butt, lift hands and feet, balance."} },
+                { name: {"zh-TW":"烏龜縮殼","zh-HK":"烏龜縮殼","en-US":"Turtle Shell"}, part:"core", icon:"🐢", desc: {"zh-TW":"跪在地上，屁股坐在腳跟上，額頭貼地，雙手放在腳旁放鬆。","zh-HK":"跪在地上，屁股坐在腳跟上，額頭貼地，雙手放在腳旁放鬆。","en-US":"Child's pose: kneel, sit on heels, forehead to ground."} },
+                { name: {"zh-TW":"摸膝蓋","zh-HK":"摸膝蓋","en-US":"Knee Touch"}, part:"core", icon:"🦵", desc: {"zh-TW":"站立，抬起一邊膝蓋，用對面的手肘去碰它，腰部要扭轉。","zh-HK":"站立，抬起一邊膝蓋，用對面的手肘去碰它，腰部要扭轉。","en-US":"Stand, lift knee to touch opposite elbow, twist waist."} },
+                { name: {"zh-TW":"搖呼拉圈","zh-HK":"搖呼拉圈","en-US":"Hula Hoop"}, part:"core", icon:"⭕", desc: {"zh-TW":"雙手叉腰，屁股畫超級大的圓圈，幅度要大。","zh-HK":"雙手叉腰，屁股畫超級大的圓圈，幅度要大。","en-US":"Hands on hips, circle hips widely."} },
+                { name: {"zh-TW":"鐵塔站立","zh-HK":"鐵塔站立","en-US":"Eiffel Tower"}, part:"core", icon:"🗼", desc: {"zh-TW":"雙腳併攏夾緊，全身肌肉繃緊用力，維持10秒不動。","zh-HK":"雙腳併攏夾緊，全身肌肉繃緊用力，維持10秒不動。","en-US":"Feet together, tense entire body, hold still for 10s."} },
+                { name: {"zh-TW":"毛毛蟲爬","zh-HK":"毛毛蟲爬","en-US":"Caterpillar Crawl"}, part:"core", icon:"🐛", desc: {"zh-TW":"站立彎腰手觸地，手向前爬幾步到伏地挺身姿勢，再推手爬回站立。","zh-HK":"站立彎腰手觸地，手向前爬幾步到伏地挺身姿勢，再推手爬回站立。","en-US":"Bend over, walk hands out to plank, walk hands back to stand."} },
+                { name: {"zh-TW":"大熊爬行","zh-HK":"大熊爬行","en-US":"Bear Crawl"}, part:"core", icon:"🐻", desc: {"zh-TW":"手腳著地，屁股拱高，原地輪流抬起右手左腳、左手右腳。","zh-HK":"手腳著地，屁股拱高，原地輪流抬起右手左腳、左手右腳。","en-US":"Hands and feet on ground, hips high, lift alternate limbs in place."} },
+                { name: {"zh-TW":"拱橋","zh-HK":"拱橋","en-US":"Arch Bridge"}, part:"core", icon:"🌉", desc: {"zh-TW":"躺在地上，雙腳踩地，用力把屁股抬高，肩膀留在地上。","zh-HK":"躺在地上，雙腳踩地，用力把屁股抬高，肩膀留在地上。","en-US":"Lie on back, feet flat, lift hips high (bridge pose)."} }
             ],
             junior: [
-                {name: "開合跳", desc: "雙手頭頂擊掌，雙腳跳開", icon: "🤸"},
-                {name: "高抬腿", desc: "大腿抬高至水平", icon: "🏃"},
-                {name: "深蹲", desc: "臀部向後坐，背部挺直", icon: "🪑"},
-                {name: "波比跳", desc: "蹲下後跳，全身運動", icon: "💥"},
-                {name: "登山者", desc: "伏地挺身姿勢，膝蓋衝刺", icon: "🧗"},
-                {name: "平板支撐", desc: "手肘撐地，腹部收緊", icon: "🪵"}
+                // 👐 上肢 (12)
+                { name: {"zh-TW":"直臂前後擊掌","zh-HK":"直臂前後擊掌","en-US":"Straight Arm Claps"}, part:"upper", icon:"👏", desc: {"zh-TW":"手臂伸直前後擺動，前擊掌時含胸，後擊掌時擴胸，掌心相對。","zh-HK":"手臂伸直前後擺動，前擊掌時含胸，後擊掌時擴胸，掌心相對。","en-US":"Swing straight arms front and back, clapping in front."} },
+                { name: {"zh-TW":"肩部繞環","zh-HK":"肩部繞環","en-US":"Shoulder Circles"}, part:"upper", icon:"💪", desc: {"zh-TW":"指尖搭在肩膀上，手肘畫出最大的圓圈，速度適中，前後各10次。","zh-HK":"指尖搭在肩膀上，手肘畫出最大的圓圈，速度適中，前後各10次。","en-US":"Fingertips on shoulders, circle elbows widely forward and back."} },
+                { name: {"zh-TW":"擴胸運動","zh-HK":"擴胸運動","en-US":"Chest Expander"}, part:"upper", icon:"👐", desc: {"zh-TW":"雙臂屈肘後振兩次，接著直臂後振兩次，要有節奏感 (1-2-3-4)。","zh-HK":"雙臂屈肘後振兩次，接著直臂後振兩次，要有節奏感 (1-2-3-4)。","en-US":"Elbows back twice, then straight arms back twice, rhythmically."} },
+                { name: {"zh-TW":"螺旋槳","zh-HK":"螺旋槳","en-US":"Propeller Arms"}, part:"upper", icon:"🚁", desc: {"zh-TW":"雙臂側平舉，掌心向下，手臂伸直做快速的小圓圈轉動。","zh-HK":"雙臂側平舉，掌心向下，手臂伸直做快速的小圓圈轉動。","en-US":"Arms out, palms down, small fast arm circles."} },
+                { name: {"zh-TW":"古巴推舉","zh-HK":"古巴推舉","en-US":"Cuban Press"}, part:"upper", icon:"🏋️", desc: {"zh-TW":"雙手握拳，上臂平舉，前臂向上翻轉再向下翻轉，活動肩袖。","zh-HK":"雙手握拳，上臂平舉，前臂向上翻轉再向下翻轉，活動肩袖。","en-US":"Arms up, rotate forearms up and down to warm up rotators."} },
+                { name: {"zh-TW":"太極推手","zh-HK":"太極推手","en-US":"Tai Chi Push"}, part:"upper", icon:"☯️", desc: {"zh-TW":"馬步站立，雙手掌心向前，緩慢用力向前推出，感受背部發力。","zh-HK":"馬步站立，雙手掌心向前，緩慢用力向前推出，感受背部發力。","en-US":"Squat stance, push palms forward slowly with force."} },
+                { name: {"zh-TW":"頸部十字伸展","zh-HK":"頸部十字伸展","en-US":"Neck Cross Stretch"}, part:"upper", icon:"👤", desc: {"zh-TW":"緩慢做點頭、仰頭、頭向左倒、頭向右倒，動作要慢，不要用力甩。","zh-HK":"緩慢做點頭、仰頭、頭向左倒、頭向右倒，動作要慢，不要用力甩。","en-US":"Slowly nod up, down, left, right. Don't jerk."} },
+                { name: {"zh-TW":"三頭肌拉伸","zh-HK":"三頭肌拉伸","en-US":"Triceps Stretch"}, part:"upper", icon:"💪", desc: {"zh-TW":"一手手肘彎曲置於頭後，另一手輕壓該手肘向下，拉伸上手臂後側。","zh-HK":"一手手肘彎曲置於頭後，另一手輕壓該手肘向下，拉伸上手臂後側。","en-US":"Elbow behind head, gently press down to stretch tricep."} },
+                { name: {"zh-TW":"手腕腳踝熱身","zh-HK":"手腕腳踝熱身","en-US":"Wrist Ankle Rolls"}, part:"upper", icon:"🦶", desc: {"zh-TW":"雙手互扣轉動手腕，同時單腳腳尖點地轉動腳踝，兩邊輪替。","zh-HK":"雙手互扣轉動手腕，同時單腳腳尖點地轉動腳踝，兩邊輪替。","en-US":"Clasp hands rotate wrists, while rotating one ankle."} },
+                { name: {"zh-TW":"W字夾背","zh-HK":"W字夾背","en-US":"W-Squeeze"}, part:"upper", icon:"👐", desc: {"zh-TW":"雙臂舉起成「W」字型，用力向後夾緊肩胛骨，停留1秒再放鬆。","zh-HK":"雙臂舉起成「W」字型，用力向後夾緊肩胛骨，停留1秒再放鬆。","en-US":"Arms in W shape, squeeze shoulder blades back, hold."} },
+                { name: {"zh-TW":"拳擊直拳","zh-HK":"拳擊直拳","en-US":"Jab Cross"}, part:"upper", icon:"🥊", desc: {"zh-TW":"原地站立，雙手握拳，快速交替向前直拳出擊，腰部配合轉動。","zh-HK":"原地站立，雙手握拳，快速交替向前直拳出擊，腰部配合轉動。","en-US":"Stand, rapid straight punches, rotating waist."} },
+                { name: {"zh-TW":"上勾拳","zh-HK":"上勾拳","en-US":"Uppercut"}, part:"upper", icon:"✊", desc: {"zh-TW":"原地站立，由下往上做勾拳動作，利用腿部蹬地力量帶動手臂。","zh-HK":"原地站立，由下往上做勾拳動作，利用腿部蹬地力量帶動手臂。","en-US":"Punch upwards, driving power from legs."} },
+                // 🦵 下肢 (12)
+                { name: {"zh-TW":"原地高抬腿","zh-HK":"原地高抬腿","en-US":"High Knees"}, part:"lower", icon:"🏃", desc: {"zh-TW":"大腿抬高至水平，上半身保持正直，擺臂配合。","zh-HK":"大腿抬高至水平，上半身保持正直，擺臂配合。","en-US":"Run in place, lifting knees high."} },
+                { name: {"zh-TW":"踢臀跑","zh-HK":"踢臀跑","en-US":"Butt Kicks"}, part:"lower", icon:"👢", desc: {"zh-TW":"腳跟踢向臀部，大腿保持垂直地面，頻率要快。","zh-HK":"腳跟踢向臀部，大腿保持垂直地面，頻率要快。","en-US":"Kick heels back to glutes rapidly."} },
+                { name: {"zh-TW":"後撤步弓箭步","zh-HK":"後撤步弓箭步","en-US":"Reverse Lunge"}, part:"lower", icon:"🤺", desc: {"zh-TW":"向後跨步下蹲，前膝不超過腳尖，後膝接近地面，左右交替。","zh-HK":"向後跨步下蹲，前膝不超過腳尖，後膝接近地面，左右交替。","en-US":"Step back into a lunge, alternate legs."} },
+                { name: {"zh-TW":"側面蹲","zh-HK":"側面蹲","en-US":"Side Lunge"}, part:"lower", icon:"🦵", desc: {"zh-TW":"向側邊跨步蹲下，另一腿伸直，重心在蹲下的腿上。","zh-HK":"向側邊跨步蹲下，另一腿伸直，重心在蹲下的腿上。","en-US":"Lunge to the side, keep other leg straight."} },
+                { name: {"zh-TW":"提膝外展","zh-HK":"提膝外展","en-US":"Hip Opener"}, part:"lower", icon:"🚪", desc: {"zh-TW":"單腿提膝後向外畫圈放下，活動髖關節，左右交替。","zh-HK":"單腿提膝後向外畫圈放下，活動髖關節，左右交替。","en-US":"Lift knee, rotate out and down to open hips."} },
+                { name: {"zh-TW":"提膝內收","zh-HK":"提膝內收","en-US":"Hip Closer"}, part:"lower", icon:"🚪", desc: {"zh-TW":"單腿從外側向內畫圈放下，活動髖關節，左右交替。","zh-HK":"單腿從外側向內畫圈放下，活動髖關節，左右交替。","en-US":"Lift knee from outside, rotate in and down."} },
+                { name: {"zh-TW":"快速點地","zh-HK":"快速點地","en-US":"Fast Feet"}, part:"lower", icon:"🦶", desc: {"zh-TW":"雙腳微開，用腳尖快速原地踏步，頻率越快越好。","zh-HK":"雙腳微開，用腳尖快速原地踏步，頻率越快越好。","en-US":"Rapid small steps on tiptoes."} },
+                { name: {"zh-TW":"單腿硬舉","zh-HK":"單腿硬舉","en-US":"Single Leg Deadlift"}, part:"lower", icon:"⚖️", desc: {"zh-TW":"單腳站立，身體前傾成T字型，後腳向後伸直，保持平衡。","zh-HK":"單腳站立，身體前傾成T字型，後腳向後伸直，保持平衡。","en-US":"Balance on one leg, hinge forward to T shape."} },
+                { name: {"zh-TW":"深蹲","zh-HK":"深蹲","en-US":"Squat"}, part:"lower", icon:"🪑", desc: {"zh-TW":"臀部向後坐，背部挺直，膝蓋與腳尖同向。","zh-HK":"臀部向後坐，背部挺直，膝蓋與腳尖同向。","en-US":"Sit hips back, chest up, knees align with toes."} },
+                { name: {"zh-TW":"腳尖彈跳","zh-HK":"腳尖彈跳","en-US":"Ankle Hops"}, part:"lower", icon:"🐇", desc: {"zh-TW":"膝蓋微彎鎖定，只用腳踝力量原地向上彈跳。","zh-HK":"膝蓋微彎鎖定，只用腳踝力量原地向上彈跳。","en-US":"Jump using only ankles, knees slightly bent."} },
+                { name: {"zh-TW":"前後剪刀腳","zh-HK":"前後剪刀腳","en-US":"Scissor Runs"}, part:"lower", icon:"✂️", desc: {"zh-TW":"雙腳像剪刀一樣前後快速交替跳動，擺臂配合。","zh-HK":"雙腳像剪刀一樣前後快速交替跳動，擺臂配合。","en-US":"Switch feet forward and back rapidly."} },
+                { name: {"zh-TW":"小腿拉伸","zh-HK":"小腿拉伸","en-US":"Calf Stretch"}, part:"lower", icon:"👠", desc: {"zh-TW":"弓箭步姿勢，後腳跟用力踩地，感受小腿後側拉伸。","zh-HK":"弓箭步姿勢，後腳跟用力踩地，感受小腿後側拉伸。","en-US":"Lunge stance, press back heel down to stretch calf."} },
+                // ✨ 綜合 (13)
+                { name: {"zh-TW":"溜冰者跳","zh-HK":"溜冰者跳","en-US":"Skater Jump"}, part:"full", icon:"⛸️", desc: {"zh-TW":"左右跳躍，落地時後腳斜向後交叉，身體前傾，手臂像溜冰擺動。","zh-HK":"左右跳躍，落地時後腳斜向後交叉，身體前傾，手臂像溜冰擺動。","en-US":"Hop side to side, crossing back leg, arm swing like skating."} },
+                { name: {"zh-TW":"波比跳 (簡易)","zh-HK":"波比跳 (簡易)","en-US":"Easy Burpee"}, part:"full", icon:"💥", desc: {"zh-TW":"蹲下 -> 手撐地 -> 雙腳後跳成平板 -> 收回 -> 站起 (不伏地挺身)。","zh-HK":"蹲下 -> 手撐地 -> 雙腳後跳成平板 -> 收回 -> 站起 (不伏地挺身)。","en-US":"Squat, plank, squat, stand up (no pushup)."} },
+                { name: {"zh-TW":"深蹲跳","zh-HK":"深蹲跳","en-US":"Squat Jump"}, part:"full", icon:"🚀", desc: {"zh-TW":"做標準深蹲，起來時用力向上跳起，落地時順勢蹲下緩衝。","zh-HK":"做標準深蹲，起來時用力向上跳起，落地時順勢蹲下緩衝。","en-US":"Squat down, explode up, land softly."} },
+                { name: {"zh-TW":"十字跳","zh-HK":"十字跳","en-US":"Cross Hop"}, part:"full", icon:"➕", desc: {"zh-TW":"雙腳併攏，依序跳「前、後、左、右」，回到中心點。","zh-HK":"雙腳併攏，依序跳「前、後、左、右」，回到中心點。","en-US":"Feet together, hop Front-Back-Left-Right."} },
+                { name: {"zh-TW":"登山者 (慢速)","zh-HK":"登山者 (慢速)","en-US":"Slow Climbers"}, part:"full", icon:"🧗", desc: {"zh-TW":"手撐地成平板式，膝蓋輪流向胸口靠近，保持背部平直不晃動。","zh-HK":"手撐地成平板式，膝蓋輪流向胸口靠近，保持背部平直不晃動。","en-US":"Plank position, bring knees to chest slowly."} },
+                { name: {"zh-TW":"交叉開合跳","zh-HK":"交叉開合跳","en-US":"Cross Jacks"}, part:"full", icon:"❌", desc: {"zh-TW":"跳起時手腳在胸前交叉，落地時打開。","zh-HK":"跳起時手腳在胸前交叉，落地時打開。","en-US":"Jumping jacks but cross arms and legs."} },
+                { name: {"zh-TW":"隱形跳繩","zh-HK":"隱形跳繩","en-US":"Invisible Rope"}, part:"full", icon:"➰", desc: {"zh-TW":"手腕搖動隱形的繩子，雙腳有節奏地輕跳，可變化單腳或雙腳。","zh-HK":"手腕搖動隱形的繩子，雙腳有節奏地輕跳，可變化單腳或雙腳。","en-US":"Pretend to jump rope, bounce lightly."} },
+                { name: {"zh-TW":"轉體跳 180度","zh-HK":"轉體跳 180度","en-US":"180 Jump"}, part:"full", icon:"🔄", desc: {"zh-TW":"原地跳起，在空中轉身向後看，落地時要站穩。","zh-HK":"原地跳起，在空中轉身向後看，落地時要站穩。","en-US":"Jump and spin 180 degrees, stick the landing."} },
+                { name: {"zh-TW":"拍腳底板","zh-HK":"拍腳底板","en-US":"Toe Taps"}, part:"full", icon:"👟", desc: {"zh-TW":"向前直腿踢，用對側手去拍腳底板，保持腿部伸直。","zh-HK":"向前直腿踢，用對側手去拍腳底板，保持腿部伸直。","en-US":"Kick forward straight, touch toe with opposite hand."} },
+                { name: {"zh-TW":"向後拍腳跟","zh-HK":"向後拍腳跟","en-US":"Heel Taps"}, part:"full", icon:"👠", desc: {"zh-TW":"向後踢腿，用對側手去拍腳跟，訓練手眼協調。","zh-HK":"向後踢腿，用對側手去拍腳跟，訓練手眼協調。","en-US":"Kick back, tap heel with opposite hand."} },
+                { name: {"zh-TW":"殭屍跳","zh-HK":"殭屍跳","en-US":"Zombie Hops"}, part:"full", icon:"🧟", desc: {"zh-TW":"雙手平舉，直腿跳躍，主要用腳尖著地，膝蓋少彎曲。","zh-HK":"雙手平舉，直腿跳躍，主要用腳尖著地，膝蓋少彎曲。","en-US":"Arms out, straight leg hops on toes."} },
+                { name: {"zh-TW":"相撲跳","zh-HK":"相撲跳","en-US":"Sumo Jump"}, part:"full", icon:"🥋", desc: {"zh-TW":"寬站姿深蹲，跳起後落地保持寬站姿，大腿內側發力。","zh-HK":"寬站姿深蹲，跳起後落地保持寬站姿，大腿內側發力。","en-US":"Wide stance squat jump."} },
+                { name: {"zh-TW":"敏捷梯步伐","zh-HK":"敏捷梯步伐","en-US":"Ladder Drill"}, part:"full", icon:"🪜", desc: {"zh-TW":"想像地上有格子，做「進進出出」的快速腳步，保持重心低。","zh-HK":"想像地上有格子，做「進進出出」的快速腳步，保持重心低。","en-US":"Fast feet in-in-out-out pattern."} },
+                // 🧘 核心 (13)
+                { name: {"zh-TW":"站姿肘觸膝","zh-HK":"站姿肘觸膝","en-US":"Elbow to Knee"}, part:"core", icon:"🦵", desc: {"zh-TW":"雙手抱頭，抬起左膝碰右肘，再抬右膝碰左肘，腹部用力扭轉。","zh-HK":"雙手抱頭，抬起左膝碰右肘，再抬右膝碰左肘，腹部用力扭轉。","en-US":"Hands behind head, elbow to opposite knee twist."} },
+                { name: {"zh-TW":"平板支撐","zh-HK":"平板支撐","en-US":"Plank"}, part:"core", icon:"🪵", desc: {"zh-TW":"手肘撐地，從頭到腳跟成一直線，收緊小腹，堅持20秒。","zh-HK":"手肘撐地，從頭到腳跟成一直線，收緊小腹，堅持20秒。","en-US":"Elbows down, body straight, hold tight."} },
+                { name: {"zh-TW":"體前屈","zh-HK":"體前屈","en-US":"Forward Fold"}, part:"core", icon:"🧘", desc: {"zh-TW":"雙腿伸直，彎腰手指盡量觸地，拉伸大腿後側，膝蓋不彎曲。","zh-HK":"雙腿伸直，彎腰手指盡量觸地，拉伸大腿後側，膝蓋不彎曲。","en-US":"Legs straight, bend forward to touch toes."} },
+                { name: {"zh-TW":"風車觸趾","zh-HK":"風車觸趾","en-US":"Windmill Toe Touch"}, part:"core", icon:"🌬️", desc: {"zh-TW":"寬站姿，雙手張開，右手碰左腳尖，左手碰右腳尖，輪流進行。","zh-HK":"寬站姿，雙手張開，右手碰左腳尖，左手碰右腳尖，輪流進行。","en-US":"Wide stance, alternate touching opposite toes."} },
+                { name: {"zh-TW":"仰臥起坐 (摸膝)","zh-HK":"仰臥起坐 (摸膝)","en-US":"Knee Crunches"}, part:"core", icon:"🛌", desc: {"zh-TW":"躺地屈膝，雙手向前摸到膝蓋即可，不需要完全坐起來。","zh-HK":"躺地屈膝，雙手向前摸到膝蓋即可，不需要完全坐起來。","en-US":"Lie down, reach hands to knees, partial sit-up."} },
+                { name: {"zh-TW":"飛燕式","zh-HK":"飛燕式","en-US":"Swallow Pose"}, part:"core", icon:"🐦", desc: {"zh-TW":"趴在地上，手和腳同時向後抬起，像燕子飛，訓練下背肌群。","zh-HK":"趴在地上，手和腳同時向後抬起，像燕子飛，訓練下背肌群。","en-US":"Lie on belly, lift arms and legs back."} },
+                { name: {"zh-TW":"跪姿超人","zh-HK":"跪姿超人","en-US":"Bird Dog"}, part:"core", icon:"🐕", desc: {"zh-TW":"四足跪姿，伸直右手和左腳，保持背部水平，不要塌腰。","zh-HK":"四足跪姿，伸直右手和左腳，保持背部水平，不要塌腰。","en-US":"Kneeling, extend opposite arm and leg straight."} },
+                { name: {"zh-TW":"俄羅斯轉體","zh-HK":"俄羅斯轉體","en-US":"Russian Twist (Stand)"}, part:"core", icon:"🇷🇺", desc: {"zh-TW":"馬步站立，雙手握拳放在胸前，左右快速轉動腰部，下盤不動。","zh-HK":"馬步站立，雙手握拳放在胸前，左右快速轉動腰部，下盤不動。","en-US":"Squat stance, twist torso left and right quickly."} },
+                { name: {"zh-TW":"單腿平衡觸地","zh-HK":"單腿平衡觸地","en-US":"Single Leg Touch"}, part:"core", icon:"⚖️", desc: {"zh-TW":"單腳站立，慢慢彎腰嘗試用手摸地面，再慢慢站起來。","zh-HK":"單腳站立，慢慢彎腰嘗試用手摸地面，再慢慢站起來。","en-US":"Stand on one leg, bend to touch floor, stand up."} },
+                { name: {"zh-TW":"坐姿收腿","zh-HK":"坐姿收腿","en-US":"Seated Tucks"}, part:"core", icon:"🪑", desc: {"zh-TW":"坐在地上手撐後方，雙腿併攏向前伸直，再收回胸前。","zh-HK":"坐在地上手撐後方，雙腿併攏向前伸直，再收回胸前。","en-US":"Sit, hands back, extend and tuck legs."} },
+                { name: {"zh-TW":"側向伸展","zh-HK":"側向伸展","en-US":"Side Stretch"}, part:"core", icon:"🙆", desc: {"zh-TW":"一手叉腰，另一手舉高過頭向對側彎腰，拉伸側腹部。","zh-HK":"一手叉腰，另一手舉高過頭向對側彎腰，拉伸側腹部。","en-US":"Reach one arm over head, lean to side."} },
+                { name: {"zh-TW":"髖部畫8字","zh-HK":"髖部畫8字","en-US":"Hip Figure 8"}, part:"core", icon:"🎱", desc: {"zh-TW":"雙手叉腰，用屁股在空中畫橫向的「8」字，放鬆腰部。","zh-HK":"雙手叉腰，用屁股在空中畫橫向的「8」字，放鬆腰部。","en-US":"Hands on hips, draw figure 8 with hips."} },
+                { name: {"zh-TW":"背部伸展","zh-HK":"背部伸展","en-US":"Back Stretch"}, part:"core", icon:"🔙", desc: {"zh-TW":"雙手十指在背後扣住，用力向後推，挺胸抬頭。","zh-HK":"雙手十指在背後扣住，用力向後推，挺胸抬頭。","en-US":"Interlock fingers behind back, push back, chest up."} }
             ],
             teen: [
-                {name: "波比跳", desc: "深蹲伏地挺身跳起", icon: "💥"},
-                {name: "深蹲跳", desc: "深蹲後用力向上跳", icon: "🚀"},
-                {name: "分腿蹲", desc: "前後腳站立下蹲", icon: "🏋️"},
-                {name: "伏地挺身", desc: "胸口貼近地面再推起", icon: "💪"},
-                {name: "俄羅斯轉體", desc: "坐姿左右轉動腰部", icon: "🇷🇺"},
-                {name: "登山者衝刺", desc: "快速交替提膝", icon: "🏃"}
+                // 👐 上肢 (12)
+                { name: {"zh-TW":"Y-T-W-L 伸展","zh-HK":"Y-T-W-L 伸展","en-US":"Y-T-W-L Stretch"}, part:"upper", icon:"🙆", desc: {"zh-TW":"俯身或站立，手臂依序擺出 Y、T、W、L 字母形狀，激活肩胛骨周圍肌肉。","zh-HK":"俯身或站立，手臂依序擺出 Y、T、W、L 字母形狀，激活肩胛骨周圍肌肉。","en-US":"Form Y, T, W, L shapes with arms to activate scapula."} },
+                { name: {"zh-TW":"動態擴胸","zh-HK":"動態擴胸","en-US":"Dynamic Chest"}, part:"upper", icon:"👐", desc: {"zh-TW":"雙臂打開向後做彈震動作，同時單腳向前跨步，左右交替。","zh-HK":"雙臂打開向後做彈震動作，同時單腳向前跨步，左右交替。","en-US":"Open arms wide, bounce back while stepping forward."} },
+                { name: {"zh-TW":"手臂剪刀交叉","zh-HK":"手臂剪刀交叉","en-US":"Arm Scissors"}, part:"upper", icon:"✂️", desc: {"zh-TW":"雙臂在胸前水平快速交叉，上下輪替，活動胸肌與後背。","zh-HK":"雙臂在胸前水平快速交叉，上下輪替，活動胸肌與後背。","en-US":"Cross arms horizontally in front quickly."} },
+                { name: {"zh-TW":"尺蠖爬行","zh-HK":"尺蠖爬行","en-US":"Inchworm"}, part:"upper", icon:"🐛", desc: {"zh-TW":"站立手觸地，手向前爬至平板式，再推手爬回站立，腳不移動，拉伸後腿。","zh-HK":"站立手觸地，手向前爬至平板式，再推手爬回站立，腳不移動，拉伸後腿。","en-US":"Walk hands out to plank and back, legs straight."} },
+                { name: {"zh-TW":"俯身T型轉體","zh-HK":"俯身T型轉體","en-US":"T-Rotation"}, part:"upper", icon:"🔄", desc: {"zh-TW":"寬站姿俯身，一手觸地，另一手指向天空，頭跟著轉動看手。","zh-HK":"寬站姿俯身，一手觸地，另一手指向天空，頭跟著轉動看手。","en-US":"Bend over, one hand down, twist other hand to sky."} },
+                { name: {"zh-TW":"肩袖內外旋","zh-HK":"肩袖內外旋","en-US":"Rotator Cuff"}, part:"upper", icon:"💪", desc: {"zh-TW":"上臂貼緊身體，前臂做開門/關門動作，速度快，熱身肩膀深層肌肉。","zh-HK":"上臂貼緊身體，前臂做開門/關門動作，速度快，熱身肩膀深層肌肉。","en-US":"Elbows in, rotate forearms out and in quickly."} },
+                { name: {"zh-TW":"過頂三頭肌伸展","zh-HK":"過頂三頭肌伸展","en-US":"Overhead Tri"}, part:"upper", icon:"🙆", desc: {"zh-TW":"雙手互握向上伸直，向後彎曲手肘，頭部輕推手臂，拉伸肱三頭肌。","zh-HK":"雙手互握向上伸直，向後彎曲手肘，頭部輕推手臂，拉伸肱三頭肌。","en-US":"Arms up, bend elbows back, stretch triceps."} },
+                { name: {"zh-TW":"手腕四向拉伸","zh-HK":"手腕四向拉伸","en-US":"Wrist Stretch"}, part:"upper", icon:"✋", desc: {"zh-TW":"手臂伸直，掌心分別向外、向內、向上、向下掰動，拉伸前臂肌群。","zh-HK":"手臂伸直，掌心分別向外、向內、向上、向下掰動，拉伸前臂肌群。","en-US":"Stretch wrists in all 4 directions."} },
+                { name: {"zh-TW":"頸部抗阻力","zh-HK":"頸部抗阻力","en-US":"Neck Iso"}, part:"upper", icon:"👤", desc: {"zh-TW":"手掌壓額頭，頭用力頂手掌，手不動，做頸部肌肉等長收縮。","zh-HK":"手掌壓額頭，頭用力頂手掌，手不動，做頸部肌肉等長收縮。","en-US":"Press hand against head, resist movement."} },
+                { name: {"zh-TW":"站姿推牆","zh-HK":"站姿推牆","en-US":"Wall Push"}, part:"upper", icon:"🧱", desc: {"zh-TW":"對著牆壁做快速推手（伏地挺身動作），強調快速推離牆面。","zh-HK":"對著牆壁做快速推手（伏地挺身動作），強調快速推離牆面。","en-US":"Explosive push-ups against a wall."} },
+                { name: {"zh-TW":"雙臂後伸抬高","zh-HK":"雙臂後伸抬高","en-US":"Rear Arm Lift"}, part:"upper", icon:"🔙", desc: {"zh-TW":"雙手在背後互扣，挺胸，手臂盡量向上抬高，不聳肩。","zh-HK":"雙手在背後互扣，挺胸，手臂盡量向上抬高，不聳肩。","en-US":"Hands clasped behind back, lift arms high."} },
+                { name: {"zh-TW":"模擬投擲","zh-HK":"模擬投擲","en-US":"Throwing"}, part:"upper", icon:"⚾", desc: {"zh-TW":"模仿投球動作，手臂鞭打式揮動，放鬆肩關節，左右手都要做。","zh-HK":"模仿投球動作，手臂鞭打式揮動，放鬆肩關節，左右手都要做。","en-US":"Mimic throwing a ball with whip-like arm motion."} },
+                // 🦵 下肢 (12)
+                { name: {"zh-TW":"最偉大拉伸","zh-HK":"最偉大拉伸","en-US":"Greatest Stretch"}, part:"lower", icon:"🧘", desc: {"zh-TW":"大步弓箭步，同側手肘觸地，再轉身指向天空，最後伸直前腿。","zh-HK":"大步弓箭步，同側手肘觸地，再轉身指向天空，最後伸直前腿。","en-US":"Lunge, elbow to floor, twist up, straighten leg."} },
+                { name: {"zh-TW":"抱膝提踵","zh-HK":"抱膝提踵","en-US":"Knee Hug Calf"}, part:"lower", icon:"🦵", desc: {"zh-TW":"單腳抱膝拉向胸口，同時支撐腳踮起腳尖，拉伸並訓練平衡。","zh-HK":"單腳抱膝拉向胸口，同時支撐腳踮起腳尖，拉伸並訓練平衡。","en-US":"Hug knee to chest, raise onto toes of standing leg."} },
+                { name: {"zh-TW":"股四頭肌拉伸","zh-HK":"股四頭肌拉伸","en-US":"Quad Stretch"}, part:"lower", icon:"🦵", desc: {"zh-TW":"單腳站立，手抓同側腳踝向後拉，保持膝蓋併攏，另一手向前平衡。","zh-HK":"單腳站立，手抓同側腳踝向後拉，保持膝蓋併攏，另一手向前平衡。","en-US":"Grab ankle behind glute, keep knees together."} },
+                { name: {"zh-TW":"側弓步轉移","zh-HK":"側弓步轉移","en-US":"Side Lunge Shift"}, part:"lower", icon:"↔️", desc: {"zh-TW":"雙腳寬站，重心在左右腳之間平移滑動，保持臀部低位。","zh-HK":"雙腳寬站，重心在左右腳之間平移滑動，保持臀部低位。","en-US":"Wide stance, shift weight side to side staying low."} },
+                { name: {"zh-TW":"相撲蹲轉體","zh-HK":"相撲蹲轉體","en-US":"Sumo Twist"}, part:"lower", icon:"🥋", desc: {"zh-TW":"深蹲姿勢，雙手撐膝，肩膀輪流向下壓並轉頭看後方。","zh-HK":"深蹲姿勢，雙手撐膝，肩膀輪流向下壓並轉頭看後方。","en-US":"Sumo squat, drop shoulder and twist."} },
+                { name: {"zh-TW":"單腿羅馬尼亞","zh-HK":"單腿羅馬尼亞","en-US":"Single RDL"}, part:"lower", icon:"⚖️", desc: {"zh-TW":"單腳支撐，另一腳向後延伸，身體前傾保持背平，感受大腿後側。","zh-HK":"單腳支撐，另一腳向後延伸，身體前傾保持背平，感受大腿後側。","en-US":"Hinge forward on one leg, flat back, feel hamstring."} },
+                { name: {"zh-TW":"前後擺腿","zh-HK":"前後擺腿","en-US":"Leg Swings F/B"}, part:"lower", icon:"🦵", desc: {"zh-TW":"手扶牆，單腿大幅度前後擺動，放鬆髖關節。","zh-HK":"手扶牆，單腿大幅度前後擺動，放鬆髖關節。","en-US":"Swing leg forward and back loosely."} },
+                { name: {"zh-TW":"左右掃腿","zh-HK":"左右掃腿","en-US":"Leg Swings S/S"}, part:"lower", icon:"🧹", desc: {"zh-TW":"手扶牆，單腿在身體前方左右掃動，活動內收與外展肌群。","zh-HK":"手扶牆，單腿在身體前方左右掃動，活動內收與外展肌群。","en-US":"Swing leg side to side across body."} },
+                { name: {"zh-TW":"坐姿90/90","zh-HK":"坐姿90/90","en-US":"90/90 Hip"}, part:"lower", icon:"🧘", desc: {"zh-TW":"坐姿，雙腿皆彎曲90度，輪流向左右轉動髖部膝蓋觸地。","zh-HK":"坐姿，雙腿皆彎曲90度，輪流向左右轉動髖部膝蓋觸地。","en-US":"Sit, legs at 90 degrees, rotate hips side to side."} },
+                { name: {"zh-TW":"弓步下壓","zh-HK":"弓步下壓","en-US":"Lunge Pulse"}, part:"lower", icon:"⏬", desc: {"zh-TW":"弓箭步姿勢，後膝上下輕微彈動，動態拉伸髖屈肌。","zh-HK":"弓箭步姿勢，後膝上下輕微彈動，動態拉伸髖屈肌。","en-US":"Lunge position, pulse up and down."} },
+                { name: {"zh-TW":"腳踝繞環","zh-HK":"腳踝繞環","en-US":"Ankle Circles"}, part:"lower", icon:"🦶", desc: {"zh-TW":"單腳站立，另一腳懸空畫大圓圈，活動腳踝關節。","zh-HK":"單腳站立，另一腳懸空畫大圓圈，活動腳踝關節。","en-US":"Rotate ankle in big circles."} },
+                { name: {"zh-TW":"分腿蹲","zh-HK":"分腿蹲","en-US":"Split Squat"}, part:"lower", icon:"🏋️", desc: {"zh-TW":"前後腳固定位置，垂直下蹲再站起，雙膝皆彎曲90度。","zh-HK":"前後腳固定位置，垂直下蹲再站起，雙膝皆彎曲90度。","en-US":"Static lunge up and down."} },
+                // ✨ 綜合 (13)
+                { name: {"zh-TW":"波比跳","zh-HK":"波比跳","en-US":"Burpee"}, part:"full", icon:"💥", desc: {"zh-TW":"深蹲 -> 伏地挺身 -> 雙腳收回 -> 垂直盡力跳起 (標準動作)。","zh-HK":"深蹲 -> 伏地挺身 -> 雙腳收回 -> 垂直盡力跳起 (標準動作)。","en-US":"Squat, pushup, jump feet in, jump up high."} },
+                { name: {"zh-TW":"登山者衝刺","zh-HK":"登山者衝刺","en-US":"Mtn Climber Fast"}, part:"full", icon:"🏃", desc: {"zh-TW":"伏地挺身姿勢，雙腿快速交替向胸口衝刺，保持臀部低位。","zh-HK":"伏地挺身姿勢，雙腿快速交替向胸口衝刺，保持臀部低位。","en-US":"Plank position, run knees to chest fast."} },
+                { name: {"zh-TW":"深蹲跳 (連續)","zh-HK":"深蹲跳 (連續)","en-US":"Continuous Squat Jump"}, part:"full", icon:"🚀", desc: {"zh-TW":"連續不停頓的深蹲跳躍，著重落地緩衝與立即起跳的爆發力。","zh-HK":"連續不停頓的深蹲跳躍，著重落地緩衝與立即起跳的爆發力。","en-US":"Jump repeatedly without stopping, explode up."} },
+                { name: {"zh-TW":"弓步交換跳","zh-HK":"弓步交換跳","en-US":"Lunge Jumps"}, part:"full", icon:"🔀", desc: {"zh-TW":"在弓步姿勢下，跳起在空中交換前後腳，落地時要穩。","zh-HK":"在弓步姿勢下，跳起在空中交換前後腳，落地時要穩。","en-US":"Jump from lunge, switch legs in air."} },
+                { name: {"zh-TW":"A字跳","zh-HK":"A字跳","en-US":"A-Skip"}, part:"full", icon:"🅰️", desc: {"zh-TW":"原地墊步加上高抬腿的節奏動作，強調腳掌落地時的「扒地」感。","zh-HK":"原地墊步加上高抬腿的節奏動作，強調腳掌落地時的「扒地」感。","en-US":"Rhythmic skipping with high knees."} },
+                { name: {"zh-TW":"彈跳","zh-HK":"彈跳","en-US":"Pogo Jumps"}, part:"full", icon:"🐇", desc: {"zh-TW":"膝蓋微彎鎖定不動，僅利用腳踝力量快速連續彈跳，縮短觸地時間。","zh-HK":"膝蓋微彎鎖定不動，僅利用腳踝力量快速連續彈跳，縮短觸地時間。","en-US":"Fast stiff-legged jumps using ankles."} },
+                { name: {"zh-TW":"180度深蹲跳","zh-HK":"180度深蹲跳","en-US":"180 Squat Jump"}, part:"full", icon:"🔄", desc: {"zh-TW":"深蹲跳起同時轉身180度，落地時立刻緩衝深蹲。","zh-HK":"深蹲跳起同時轉身180度，落地時立刻緩衝深蹲。","en-US":"Squat jump turning 180 degrees in air."} },
+                { name: {"zh-TW":"快速碎步","zh-HK":"快速碎步","en-US":"Fast Feet"}, part:"full", icon:"👣", desc: {"zh-TW":"雙腳與肩同寬，降低重心，以最快速度原地踏步，手臂配合擺動。","zh-HK":"雙腳與肩同寬，降低重心，以最快速度原地踏步，手臂配合擺動。","en-US":"Run in place as fast as possible, low stance."} },
+                { name: {"zh-TW":"寬距伏地開合","zh-HK":"寬距伏地開合","en-US":"Plank Jacks"}, part:"full", icon:"🤸", desc: {"zh-TW":"寬距伏地挺身開合伏地挺身姿勢，雙手不動，雙腳做開合跳動作。","zh-HK":"寬距伏地挺身開合伏地挺身姿勢，雙手不動，雙腳做開合跳動作。","en-US":"Plank position, jack legs in and out."} },
+                { name: {"zh-TW":"提膝擊掌","zh-HK":"提膝擊掌","en-US":"High Knee Clap"}, part:"full", icon:"👏", desc: {"zh-TW":"雙手高舉，下拉同時用力提膝擊掌，模擬泰拳箍頸撞膝動作。","zh-HK":"雙手高舉，下拉同時用力提膝擊掌，模擬泰拳箍頸撞膝動作。","en-US":"Pull hands down, smash knee up to clap."} },
+                { name: {"zh-TW":"單腳落地穩定","zh-HK":"單腳落地穩定","en-US":"Single Leg Land"}, part:"full", icon:"🛑", desc: {"zh-TW":"雙腳跳起，單腳落地並停住3秒，膝蓋微彎緩衝，訓練穩定性。","zh-HK":"雙腳跳起，單腳落地並停住3秒，膝蓋微彎緩衝，訓練穩定性。","en-US":"Jump up, land on one leg, hold 3 seconds."} },
+                { name: {"zh-TW":"側向滑步觸地","zh-HK":"側向滑步觸地","en-US":"Lateral Shuffle"}, part:"full", icon:"🦀", desc: {"zh-TW":"向左滑步蹲下觸地，向右滑步蹲下觸地，在原地範圍內快速折返。","zh-HK":"向左滑步蹲下觸地，向右滑步蹲下觸地，在原地範圍內快速折返。","en-US":"Shuffle side, touch ground, shuffle back."} },
+                { name: {"zh-TW":"塔巴塔衝刺","zh-HK":"塔巴塔衝刺","en-US":"Tabata Sprint"}, part:"full", icon:"⚡", desc: {"zh-TW":"原地全力高抬腿跑 20秒，膝蓋抬高，擺臂加速。","zh-HK":"原地全力高抬腿跑 20秒，膝蓋抬高，擺臂加速。","en-US":"Max effort high knee sprint in place."} },
+                // 🧘 核心 (13)
+                { name: {"zh-TW":"死蟲式","zh-HK":"死蟲式","en-US":"Dead Bug"}, part:"core", icon:"🐞", desc: {"zh-TW":"仰臥手腳朝天，核心壓緊地面，對側手腳同時下放但不觸地。","zh-HK":"仰臥手腳朝天，核心壓緊地面，對側手腳同時下放但不觸地。","en-US":"Lie on back, lower opposite arm and leg, keep back flat."} },
+                { name: {"zh-TW":"鳥狗式","zh-HK":"鳥狗式","en-US":"Bird Dog"}, part:"core", icon:"🐕", desc: {"zh-TW":"跪姿，伸直對側手腳，保持背部水平，核心收緊防止骨盆歪斜。","zh-HK":"跪姿，伸直對側手腳，保持背部水平，核心收緊防止骨盆歪斜。","en-US":"Kneel, extend opposite limbs, stable core."} },
+                { name: {"zh-TW":"側棒式","zh-HK":"側棒式","en-US":"Side Plank"}, part:"core", icon:"📐", desc: {"zh-TW":"單臂支撐側身，身體成一直線，不塌腰，停留15-20秒。","zh-HK":"單臂支撐側身，身體成一直線，不塌腰，停留15-20秒。","en-US":"Side plank hold, body straight."} },
+                { name: {"zh-TW":"捲腹","zh-HK":"捲腹","en-US":"Crunch"}, part:"core", icon:"🍫", desc: {"zh-TW":"仰臥屈膝，利用腹部力量抬起肩胛骨，下背部貼地。","zh-HK":"仰臥屈膝，利用腹部力量抬起肩胛骨，下背部貼地。","en-US":"Lie down, lift shoulders using abs, lower back down."} },
+                { name: {"zh-TW":"反向捲腹","zh-HK":"反向捲腹","en-US":"Reverse Crunch"}, part:"core", icon:"🔄", desc: {"zh-TW":"仰臥，利用腹部力量將骨盆捲離地面，膝蓋找胸口。","zh-HK":"仰臥，利用腹部力量將骨盆捲離地面，膝蓋找胸口。","en-US":"Lift hips off floor, knees to chest."} },
+                { name: {"zh-TW":"直臂平板拍肩","zh-HK":"直臂平板拍肩","en-US":"Plank Taps"}, part:"core", icon:"👋", desc: {"zh-TW":"平板支撐姿勢，單手離地拍對側肩膀，保持軀幹完全不晃動。","zh-HK":"平板支撐姿勢，單手離地拍對側肩膀，保持軀幹完全不晃動。","en-US":"Plank, tap opposite shoulder, no hip wiggle."} },
+                { name: {"zh-TW":"仰臥觸腳踝","zh-HK":"仰臥觸腳踝","en-US":"Heel Touches"}, part:"core", icon:"🐧", desc: {"zh-TW":"仰臥屈膝，上半身微抬，左右擺動身體，手去碰同側腳踝。","zh-HK":"仰臥屈膝，上半身微抬，左右擺動身體，手去碰同側腳踝。","en-US":"Lie down knees up, crunch side to side touching heels."} },
+                { name: {"zh-TW":"伐木動作","zh-HK":"伐木動作","en-US":"Woodchopper"}, part:"core", icon:"🪓", desc: {"zh-TW":"雙手握拳高舉左側，用力斜向砍至右膝外側，帶動核心轉動。","zh-HK":"雙手握拳高舉左側，用力斜向砍至右膝外側，帶動核心轉動。","en-US":"Chop hands diagonally from high to low."} },
+                { name: {"zh-TW":"早安式","zh-HK":"早安式","en-US":"Good Morning"}, part:"core", icon:"🌞", desc: {"zh-TW":"雙手抱頭，背部挺直，臀部向後推身體前傾，感受腿後與下背受力。","zh-HK":"雙手抱頭，背部挺直，臀部向後推身體前傾，感受腿後與下背受力。","en-US":"Hands behind head, hinge hips forward, back straight."} },
+                { name: {"zh-TW":"登山轉體","zh-HK":"登山轉體","en-US":"Cross Climber"}, part:"core", icon:"🧗", desc: {"zh-TW":"登山者動作變體，膝蓋向「對側」手肘尋找，增加腹斜肌參與。","zh-HK":"登山者動作變體，膝蓋向「對側」手肘尋找，增加腹斜肌參與。","en-US":"Knee to opposite elbow in plank."} },
+                { name: {"zh-TW":"V字兩頭起","zh-HK":"V字兩頭起","en-US":"V-Up"}, part:"core", icon:"✌️", desc: {"zh-TW":"仰臥，手腳同時伸直抬起，手指觸碰腳尖，身體呈V型。","zh-HK":"仰臥，手腳同時伸直抬起，手指觸碰腳尖，身體呈V型。","en-US":"Lift arms and legs to touch toes, forming a V."} },
+                { name: {"zh-TW":"仰臥抬腿","zh-HK":"仰臥抬腿","en-US":"Leg Raise"}, part:"core", icon:"🦵", desc: {"zh-TW":"平躺手放臀下，雙腿併攏直腿抬起至90度再慢放，不觸地。","zh-HK":"平躺手放臀下，雙腿併攏直腿抬起至90度再慢放，不觸地。","en-US":"Lie flat, lift straight legs up and down slow."} },
+                { name: {"zh-TW":"眼鏡蛇式","zh-HK":"眼鏡蛇式","en-US":"Cobra Stretch"}, part:"core", icon:"🐍", desc: {"zh-TW":"俯臥，手撐地將上半身撐起，恥骨貼地，拉伸腹直肌。","zh-HK":"俯臥，手撐地將上半身撐起，恥骨貼地，拉伸腹直肌。","en-US":"Lie on stomach, push chest up to stretch abs."} }
             ]
         };
 
-        const musicUrls = {
-            default: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_24a2752176.mp3",
-            happy: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
-            none: ""
+        // --- 3. 系統變數 ---
+        let currentGrade = 'teen';
+        let currentLang = 'zh-TW';
+        let queue = [];
+        let currentIndex = -1;
+        let timer = 0;
+        let timerInterval;
+        let isPaused = false;
+        let state = 'IDLE'; 
+        let isDucking = false;
+
+        let tickCount = 0; 
+        
+        let audioCtx;
+        let metroGain;
+        let configWorkTime = 30;
+        let configRestTime = 15;
+        const READY_TIME = 5;
+
+        // --- 音樂資料庫 (風格選擇) ---
+        const MUSIC_PRESETS = {
+            default: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_24a2752176.mp3", // House
+            energy: "https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3", // Rock
+            happy: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3", // Ukulele
+            game: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3", // 8-bit
+            rest: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"  // Chill
         };
 
-        // --- 2. 核心變數 ---
-        let queue = [];
-        let timer = 0;
-        let interval;
-        let isPaused = false;
-        let phase = 'IDLE'; 
-        let voiceObj = null; 
-        let currentGrade = 'kids';
+        const workPlayer = document.getElementById('audioWorkPlayer');
+        const restPlayer = document.getElementById('audioRestPlayer');
 
-        const statusBar = document.getElementById('status-bar');
-        const bgm = document.getElementById('bgm');
-
-        // --- 3. 語音系統 (針對您的 "中文(中國大陸)" 進行設定) ---
-        function initVoiceSystem() {
-            const voices = window.speechSynthesis.getVoices();
-            
-            if (voices.length === 0) {
-                // 有時候 iPad 需要一點時間載入，這裡先不報錯
-                return;
-            }
-
-            // 🔍 搜尋策略：優先找 zh-CN (中國大陸)
-            // iPad 上常見名稱：LiLi, TianTian, Yu-shu, PingFang SC
-            voiceObj = voices.find(v => v.lang === 'zh-CN') || 
-                       voices.find(v => v.name.includes('China')) ||
-                       voices.find(v => v.name.includes('Mainland')) ||
-                       voices.find(v => v.lang.indexOf('zh') > -1); // 只要是中文都行
-
-            if (voiceObj) {
-                statusBar.innerText = `✅ 成功鎖定語音：${voiceObj.name} (${voiceObj.lang})`;
-                statusBar.style.background = "#10b981"; // 綠色
-            } else {
-                statusBar.innerText = "⚠️ 找不到中文(中國大陸)語音，將嘗試系統預設值";
-            }
-        }
-
-        // 監聽 iPad 語音載入事件
-        window.speechSynthesis.onvoiceschanged = initVoiceSystem;
-        // 為了保險，每 0.5 秒檢查一次，直到找到為止
-        let initCheck = setInterval(() => {
-            const voices = window.speechSynthesis.getVoices();
-            if (voices.length > 0) {
-                initVoiceSystem();
-                clearInterval(initCheck);
-            }
-        }, 500);
-
-
-        function speak(text) {
-            window.speechSynthesis.cancel(); // 斷開上一句
-            const u = new SpeechSynthesisUtterance(text);
-            u.rate = 1.0;
-            
-            if (voiceObj) {
-                u.voice = voiceObj;
-                u.lang = voiceObj.lang; // 確保設置為 zh-CN
-            } else {
-                u.lang = 'zh-CN'; // 強制設定語言標籤
-            }
-            
-            // iPad 播放技巧：為了不讓背景音樂完全蓋過語音
-            bgm.volume = 0.2; 
-            u.onend = () => { bgm.volume = 0.5; };
-            
-            window.speechSynthesis.speak(u);
-        }
-
-        // --- 4. 互動邏輯 ---
-        function forceUnlock() {
-            // 強制測試：說這句話
-            if (window.speechSynthesis) {
-                const u = new SpeechSynthesisUtterance("測試成功，聲音正常");
-                u.lang = 'zh-CN'; // 強制大陸普通話
-                if(voiceObj) u.voice = voiceObj;
-                window.speechSynthesis.speak(u);
-            }
-            // 強制解鎖音樂
-            bgm.play().then(() => bgm.pause()).catch(e => console.log(e));
-            
-            alert("請聽是否有聲音？\n\n如果沒有：\n1. 請檢查 iPad 側邊是否有開關切到紅色。\n2. 螢幕右上角下滑，確認鈴鐺圖示沒有被劃掉。");
-        }
-
+        // --- 4. 初始化 ---
         function selectGrade(grade) {
+            // [iPad 修正] 強制喚醒
+            if (window.speechSynthesis) {
+                // 嘗試說一個空字元，但為了確保 iPad 真的醒來，我們說個 "Ready"
+                const emptyUtterance = new SpeechSynthesisUtterance("Ready");
+                emptyUtterance.volume = 0.1; // 小聲點
+                window.speechSynthesis.speak(emptyUtterance);
+            }
+            workPlayer.play().then(() => workPlayer.pause()).catch(() => {});
+            restPlayer.play().then(() => restPlayer.pause()).catch(() => {});
+
+            initAudio(); 
             currentGrade = grade;
             document.body.className = `theme-${grade}`;
             document.getElementById('gradeModal').style.display = 'none';
             document.getElementById('appContainer').style.display = 'flex';
+            updateTotalEstimate();
             
-            speak("歡迎使用，請準備開始");
-            updateEstimates();
-            changeMusic();
+            // 初始化音樂源
+            workPlayer.src = MUSIC_PRESETS.default;
+            restPlayer.src = MUSIC_PRESETS.rest;
+            
+            setTimeout(updateMixerUI, 100); 
         }
 
-        function updateEstimates() {
+        // [iPad 修正] 測試語音功能
+        function testVoice() {
+            if (!window.speechSynthesis) {
+                alert("您的裝置不支援語音合成！");
+                return;
+            }
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance("測試成功，聲音正常");
+            
+            // 強制尋找中文語音
+            const voices = window.speechSynthesis.getVoices();
+            let voice = voices.find(v => v.lang.includes('zh-TW')) || 
+                        voices.find(v => v.lang.includes('zh-CN')) || 
+                        voices.find(v => v.lang.includes('zh'));
+            
+            if (voice) u.voice = voice;
+            else u.lang = 'zh-TW';
+
+            u.rate = 1.0;
+            window.speechSynthesis.speak(u);
+            
+            if(voices.length === 0) {
+                alert("警告：尚未偵測到語音列表。請稍後再試，或檢查 iPad 設定 -> 輔助使用 -> 語音內容 -> 聲音");
+            }
+        }
+
+        function initAudio() {
+            try {
+                if (!audioCtx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContext();
+                    metroGain = audioCtx.createGain();
+                    metroGain.connect(audioCtx.destination);
+                    updateVolumes();
+                } 
+                if(audioCtx.state === 'suspended') { audioCtx.resume(); }
+            } catch (e) { console.error("Audio Init Failed:", e); }
+        }
+
+        function syncLang(val) {
+            currentLang = val;
+            document.querySelectorAll('#modalLang, #mainLang').forEach(el => el.value = val);
+        }
+
+        function goBack() {
+            resetSystem();
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('gradeModal').style.display = 'flex';
+        }
+
+        // --- 5. 音樂來源管理 ---
+        function changeMusicSource() {
+            const style = document.getElementById('musicPreset').value;
+            const uploadPanel = document.getElementById('customUploadPanel');
+            
+            if (style === 'custom') {
+                uploadPanel.style.display = 'block';
+            } else {
+                uploadPanel.style.display = 'none';
+                workPlayer.src = MUSIC_PRESETS[style];
+            }
+        }
+
+        function clearCustomMusic() {
+            document.getElementById('uploadWork').value = "";
+            document.getElementById('uploadRest').value = "";
+            document.getElementById('musicPreset').value = "default";
+            changeMusicSource(); 
+            alert("已清除自訂音樂，恢復為「預設 (House)」風格。");
+        }
+
+        // --- 6. 訓練流程 ---
+        function toggleTimeMode() {
+            const mode = document.querySelector('input[name="timeMode"]:checked').value;
+            document.getElementById('totalTimePanel').style.display = (mode==='total') ? 'block' : 'none';
+            document.getElementById('customTimePanel').style.display = (mode==='custom') ? 'block' : 'none';
+            if(mode==='total') updateTotalEstimate();
+        }
+
+        function updateCustomDisplay() {
+            document.getElementById('valWork').textContent = document.getElementById('rngWork').value + "s";
+            document.getElementById('valRest').textContent = document.getElementById('rngRest').value + "s";
+        }
+
+        function updateTotalEstimate() {
+            const totalMins = parseInt(document.getElementById('totalDuration').value);
             const count = parseInt(document.getElementById('exCount').value);
-            const totalMin = parseInt(document.getElementById('totalDuration').value);
-            const totalSec = totalMin * 60;
-            const cycleTime = Math.floor(totalSec / count);
-            const work = Math.floor(cycleTime * 0.65);
-            const rest = cycleTime - work - 5; 
-            document.getElementById('timeEst').innerText = `每動作: 預備5s / 運動${work}s / 休息${rest}s`;
-            return { work, rest };
+            const totalSeconds = totalMins * 60;
+            const timePerCycle = Math.floor(totalSeconds / count);
+            const availableTime = timePerCycle - READY_TIME;
+            
+            if (availableTime < 15) { configWorkTime = 10; configRestTime = 5; } 
+            else { configWorkTime = Math.floor(availableTime * 0.66); configRestTime = Math.floor(availableTime * 0.34); }
+
+            document.getElementById('autoTimeDisplay').textContent = 
+                `每個動作: 預備${READY_TIME}s + 運動${configWorkTime}s + 休息${configRestTime}s`;
         }
 
         function generateQueue() {
             const count = parseInt(document.getElementById('exCount').value);
-            let list = [...db[currentGrade]].sort(()=>0.5-Math.random()).slice(0, count);
-            const ul = document.getElementById('queueList');
-            ul.innerHTML = "";
-            list.forEach((item, i) => {
-                ul.innerHTML += `<li style="padding:10px; border-bottom:1px solid rgba(0,0,0,0.1); display:flex; gap:10px;">
-                    <b>${i+1}.</b> <span>${item.name}</span>
-                </li>`;
-            });
-            return list;
+            const part = document.getElementById('bodyPart').value;
+            let source = db[currentGrade];
+            if (part !== 'full') source = source.filter(ex => ex.part === part || ex.part === 'full');
+            if (source.length < count) source = db[currentGrade];
+            let shuffled = [...source].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
         }
 
-        function startWorkout() {
-            queue = generateQueue();
-            const { work, rest } = updateEstimates();
-            
-            if(document.getElementById('musicPreset').value !== 'none') {
-                bgm.play().catch(() => statusBar.innerText = "⚠️ 音樂被攔截，請再次點擊");
+        function startWorkout(isNew = true) {
+            initAudio(); 
+            const mode = document.querySelector('input[name="timeMode"]:checked').value;
+            if (mode === 'custom') {
+                configWorkTime = parseInt(document.getElementById('rngWork').value);
+                configRestTime = parseInt(document.getElementById('rngRest').value);
+            } else { updateTotalEstimate(); }
+
+            // 防呆機制
+            const preset = document.getElementById('musicPreset').value;
+            const customFile = document.getElementById('uploadWork').files[0];
+            if (preset === 'custom' && !customFile) {
+                alert("提醒：您選擇了「上傳」但未選擇檔案，系統將使用預設音樂。");
+                workPlayer.src = MUSIC_PRESETS.default;
             }
 
+            if (isNew) queue = generateQueue(); 
+            currentIndex = 0;
             document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('pauseBtn').disabled = false;
-            document.getElementById('pauseBtn').style.background = '#f59e0b';
+            document.getElementById('repeatBtn').style.display = 'none';
             
-            let qIndex = 0;
+            const pauseBtn = document.getElementById('pauseBtn');
+            pauseBtn.disabled = false;
+            pauseBtn.textContent = "⏸️ 暫停"; 
+            isPaused = false;
             
-            function runPhase(pName, duration, item) {
-                phase = pName;
-                timer = duration;
-                updateDisplay(item);
-                
-                // 語音播報 (強制普通話)
-                if (pName === 'READY') speak(`下一個動作：${item.name}。${item.desc}`);
-                if (pName === 'WORK') speak(`開始！${item.name}`);
-                if (pName === 'REST') speak("休息時間");
+            workPlayer.load(); restPlayer.load();
+            workPlayer.play().then(()=>workPlayer.pause()).catch(()=>{});
+            restPlayer.play().then(()=>restPlayer.pause()).catch(()=>{});
 
-                clearInterval(interval);
-                interval = setInterval(() => {
-                    if(isPaused) return;
-                    
-                    timer--;
-                    let m = Math.floor(timer/60).toString().padStart(2,'0');
-                    let s = (timer%60).toString().padStart(2,'0');
-                    document.getElementById('timerDisplay').innerText = `${m}:${s}`;
-
-                    if (pName === 'WORK' && timer <= 3 && timer > 0) speak(timer.toString());
-
-                    if (timer <= 0) {
-                        if (pName === 'READY') runPhase('WORK', work, item);
-                        else if (pName === 'WORK') runPhase('REST', rest, item);
-                        else if (pName === 'REST') {
-                            qIndex++;
-                            if (qIndex < queue.length) {
-                                runPhase('READY', 5, queue[qIndex]);
-                            } else {
-                                finish();
-                            }
-                        }
-                    }
-                }, 1000);
-            }
-
-            runPhase('READY', 5, queue[0]);
+            renderQueue();
+            enterPhase('READY'); 
         }
 
-        function updateDisplay(item) {
-            document.getElementById('phaseText').innerText = phase;
-            if (phase === 'REST') {
-                document.getElementById('mainIcon').innerText = "🥤";
-                document.getElementById('exName').innerText = "休息時間";
-                document.getElementById('exDesc').innerText = "調整呼吸";
-                document.body.style.background = "#e5e7eb";
-            } else {
-                document.getElementById('mainIcon').innerText = item.icon;
-                document.getElementById('exName').innerText = item.name;
-                document.getElementById('exDesc').innerText = item.desc;
-                if (phase === 'WORK') document.body.style.background = "#ffe4e6"; 
-                else document.body.style.background = "var(--bg-grad)";
+        function repeatWorkout() { startWorkout(false); }
+
+        function enterPhase(newPhase) {
+            state = newPhase;
+            const ex = queue[currentIndex];
+            let duration = (state === 'READY') ? READY_TIME : (state === 'WORK') ? configWorkTime : configRestTime;
+            
+            timer = duration;
+            updateUI(ex);
+            handleAudioAndVoice(ex); 
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(tick, 500); 
+            tickCount = 0; 
+        }
+
+        function tick() {
+            if(isPaused) return;
+
+            if (timer > 0) playMetronomeSound();
+            tickCount++;
+
+            if (tickCount % 2 === 0) {
+                timer--;
+                let m = Math.floor(timer/60);
+                let s = timer%60;
+                document.getElementById('timerDisplay').textContent = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+
+                if (state === 'WORK') {
+                    if (timer === 10) speakWithDucking(i18n[currentLang].last_10);
+                    if (timer <= 3 && timer > 0) speakWithDucking(timer.toString());
+                }
+
+                if (timer <= 0) {
+                    if (state === 'READY') enterPhase('WORK');
+                    else if (state === 'WORK') enterPhase('REST');
+                    else if (state === 'REST') {
+                        currentIndex++;
+                        if (currentIndex >= queue.length) finish();
+                        else enterPhase('READY');
+                    }
+                }
             }
+        }
+
+        // --- 7. 音訊與語音 (重點修復區域) ---
+        function applyEffectiveVolume() {
+            const userVolMusic = parseFloat(document.getElementById('volMusic').value);
+            const userVolRest = parseFloat(document.getElementById('volRest').value);
+            const factor = isDucking ? 0.1 : 1.0;
+
+            if (state === 'WORK') workPlayer.volume = userVolMusic * factor;
+            else if (state === 'REST') restPlayer.volume = userVolRest * factor;
+        }
+
+        function speakWithDucking(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            
+            isDucking = true;
+            applyEffectiveVolume();
+
+            const u = new SpeechSynthesisUtterance(text);
+            
+            // [iPad 修正] 更寬容的語音選擇邏輯 (自動降級)
+            const voices = window.speechSynthesis.getVoices();
+            let selectedVoice = null;
+            
+            if (currentLang === 'zh-TW') {
+                // 1. 優先找台灣
+                selectedVoice = voices.find(v => v.lang === 'zh-TW' || v.name.includes('Meijia') || v.name.includes('Taiwan'));
+                // 2. 找不到就找任何中文 (如 PingFang HK/China)
+                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.startsWith('zh'));
+            } else if (currentLang === 'zh-HK') {
+                selectedVoice = voices.find(v => v.lang === 'zh-HK' || v.name.includes('Hong Kong'));
+                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.startsWith('zh'));
+            } else {
+                selectedVoice = voices.find(v => v.lang.startsWith('en'));
+            }
+
+            if (selectedVoice) { 
+                u.voice = selectedVoice; 
+                u.lang = selectedVoice.lang; // 雙重保險
+            } else {
+                // 如果連一個聲音都抓不到，仍然設定語言，祈禱系統預設有效
+                u.lang = currentLang; 
+            }
+
+            u.rate = 1.0;
+            u.onend = function() { isDucking = false; applyEffectiveVolume(); };
+            window.speechSynthesis.speak(u);
+        }
+
+        // 確保 iPad 載入語音列表 (這是解決聲音選單空白的關鍵)
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = function() { 
+                window.speechSynthesis.getVoices(); 
+                console.log("Voices loaded:", window.speechSynthesis.getVoices().length);
+            };
+        }
+
+        function handleAudioAndVoice(ex) {
+            const txt = i18n[currentLang];
+
+            if (state === 'WORK') {
+                workPlayer.load(); 
+                workPlayer.play().then(() => { applyEffectiveVolume(); }).catch(()=>{});
+                restPlayer.pause(); restPlayer.currentTime = 0;
+
+                let exName = ex.name[currentLang] || ex.name['zh-TW'];
+                let exDesc = ex.desc[currentLang] || ex.desc['zh-TW'];
+                speakWithDucking(`${exName}，${exDesc}`);
+
+            } else if (state === 'REST') {
+                restPlayer.load();
+                restPlayer.play().then(() => { applyEffectiveVolume(); }).catch(()=>{});
+                workPlayer.pause(); workPlayer.currentTime = 0;
+                speakWithDucking(txt.rest_voice);
+
+            } else if (state === 'READY') {
+                workPlayer.pause();
+                restPlayer.pause();
+                let exName = ex.name[currentLang] || ex.name['zh-TW'];
+                speakWithDucking(`${txt.start_voice}：${exName}`);
+            }
+        }
+
+        function playMetronomeSound() {
+            if (!audioCtx || !document.getElementById('checkMetro').checked) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                const userVol = parseFloat(document.getElementById('volMetro').value);
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(metroGain);
+                metroGain.gain.setTargetAtTime(userVol, audioCtx.currentTime, 0.01);
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.005);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.1);
+            } catch (e) {}
+        }
+
+        // --- 8. UI 更新 ---
+        function updateUI(ex) {
+            const pill = document.getElementById('phasePill');
+            const card = document.getElementById('visualCard');
+            const emoji = document.getElementById('mainEmoji');
+            const title = document.getElementById('exName');
+            const desc = document.getElementById('exDesc');
+            const txt = i18n[currentLang];
+
+            card.setAttribute('data-state', state);
+            let exName = ex.name[currentLang] || ex.name['zh-TW'];
+            let exDescContent = ex.desc[currentLang] || ex.desc['zh-TW'];
+            if (currentLang === 'en-US') exDescContent += `\n\n(中文: ${ex.desc['zh-TW']})`;
+
+            if (state === 'READY') {
+                pill.className = 'phase-pill phase-ready'; pill.textContent = txt.ready;
+                emoji.className = 'emoji anim-bounce'; emoji.textContent = ex.icon;
+                title.textContent = `${txt.ready}：${exName}`; desc.textContent = exDescContent;
+            } else if (state === 'WORK') {
+                pill.className = 'phase-pill phase-work'; pill.textContent = txt.work;
+                emoji.className = 'emoji anim-rock';
+                title.textContent = exName; desc.textContent = exDescContent;
+            } else if (state === 'REST') {
+                pill.className = 'phase-pill phase-rest'; pill.textContent = txt.rest;
+                emoji.className = 'emoji'; emoji.textContent = '🥤';
+                title.textContent = txt.rest; desc.textContent = txt.rest_desc;
+            }
+
+            document.querySelectorAll('.queue-item').forEach((el, idx) => {
+                el.classList.remove('active', 'done');
+                if (idx < currentIndex) el.classList.add('done');
+                if (idx === currentIndex) el.classList.add('active');
+            });
+        }
+
+        function renderQueue() {
+            const list = document.getElementById('queueList');
+            list.innerHTML = '';
+            queue.forEach((item, i) => {
+                const li = document.createElement('li');
+                li.className = 'queue-item';
+                li.innerHTML = `<div class="queue-num">${i+1}</div><div>${item.name[currentLang] || item.name['zh-TW']}</div>`;
+                list.appendChild(li);
+            });
         }
 
         function finish() {
-            clearInterval(interval);
-            bgm.pause();
-            speak("訓練完成");
-            document.getElementById('phaseText').innerText = "DONE";
-            document.getElementById('mainIcon').innerText = "🎉";
-            document.getElementById('exName').innerText = "訓練結束";
-            document.getElementById('startBtn').style.display = 'block';
-            document.getElementById('startBtn').innerText = "再做一次";
+            clearInterval(timerInterval);
+            state = 'IDLE'; isDucking = false;
+            workPlayer.pause(); restPlayer.pause();
+            const txt = i18n[currentLang];
+            document.getElementById('phasePill').className = 'phase-pill phase-done'; 
+            document.getElementById('phasePill').textContent = txt.done;
+            document.getElementById('mainEmoji').textContent = '🎉';
+            document.getElementById('exName').textContent = txt.done;
+            document.getElementById('exDesc').textContent = txt.done_desc;
+            document.getElementById('timerDisplay').textContent = "00:00";
+            speakWithDucking(txt.done_desc);
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('repeatBtn').style.display = 'flex';
             document.getElementById('pauseBtn').disabled = true;
-            document.getElementById('pauseBtn').style.background = '#999';
         }
 
-        function changeMusic() {
-            const val = document.getElementById('musicPreset').value;
-            bgm.src = musicUrls[val];
+        // --- 9. 其他功能 ---
+        function toggleMusicSource() { /* 已由 changeMusicSource 取代 */ }
+        function toggleMetronomeCheck() { updateVolumes(); } 
+        document.getElementById('uploadWork').addEventListener('change', function(e) { if (e.target.files[0]) workPlayer.src = URL.createObjectURL(e.target.files[0]); });
+        document.getElementById('uploadRest').addEventListener('change', function(e) { if (e.target.files[0]) restPlayer.src = URL.createObjectURL(e.target.files[0]); });
+
+        function updateMixerUI() {
+            document.getElementById('lblVolMusic').textContent = Math.round(document.getElementById('volMusic').value * 100) + '%';
+            document.getElementById('lblVolRest').textContent = Math.round(document.getElementById('volRest').value * 100) + '%';
+            document.getElementById('lblVolMetro').textContent = Math.round(document.getElementById('volMetro').value * 100) + '%';
+            applyEffectiveVolume();
         }
+        function updateVolumes() { /* 保留 */ }
 
         function togglePause() {
             isPaused = !isPaused;
             const btn = document.getElementById('pauseBtn');
-            btn.innerText = isPaused ? "繼續" : "暫停";
+            btn.textContent = isPaused ? "▶️ 繼續" : "⏸️ 暫停";
             if (isPaused) {
-                bgm.pause();
-                window.speechSynthesis.pause();
+                workPlayer.pause(); restPlayer.pause(); window.speechSynthesis.pause();
+                if(audioCtx) audioCtx.suspend();
             } else {
-                bgm.play();
+                if(state === 'WORK') workPlayer.play();
+                if(state === 'REST') restPlayer.play();
                 window.speechSynthesis.resume();
+                if(audioCtx) audioCtx.resume();
             }
+        }
+
+        function resetSystem() {
+            clearInterval(timerInterval);
+            isPaused = false; state = 'IDLE'; currentIndex = -1; timer = 0; isDucking = false;
+            workPlayer.pause(); workPlayer.currentTime = 0;
+            restPlayer.pause(); restPlayer.currentTime = 0;
+            window.speechSynthesis.cancel();
+            document.getElementById('startBtn').style.display = 'flex';
+            document.getElementById('repeatBtn').style.display = 'none';
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('pauseBtn').textContent = "暫停";
+            document.getElementById('phasePill').className = 'phase-pill phase-rest';
+            document.getElementById('phasePill').textContent = 'READY';
+            document.getElementById('mainEmoji').textContent = '🧘';
+            document.getElementById('exName').textContent = i18n[currentLang].ready;
+            document.getElementById('timerDisplay').textContent = "00:00";
+            document.getElementById('queueList').innerHTML = '';
         }
     </script>
 </body>
