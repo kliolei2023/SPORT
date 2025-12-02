@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>獅先生_體育課熱身系統 (iPad 終極修復版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>獅先生_體育課熱身</title>
     <style>
         /* --- 🎨 核心變數 & 主題 --- */
         :root {
@@ -40,7 +40,7 @@
             font-family: 'Segoe UI', sans-serif;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-main); user-select: none; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-main); user-select: none; }
         body { background: var(--bg-grad); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; transition: background 1s; }
 
         /* --- 📱 導航列 --- */
@@ -57,17 +57,82 @@
         .nav-btn:hover { background: rgba(255,255,255,0.5); transform: scale(1.05); }
 
         /* --- 📐 佈局架構 --- */
-        .layout { display: flex; flex: 1; height: 100%; overflow: hidden; gap: 20px; padding: 20px; }
+        .layout { display: flex; flex: 1; height: 100%; overflow: hidden; gap: 20px; padding: 20px; transition: all 0.3s ease; }
         
         .panel {
             background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: var(--glass-border); border-radius: var(--radius);
-            box-shadow: var(--shadow); padding: 25px; overflow-y: auto; transition: 0.3s;
+            box-shadow: var(--shadow); padding: 25px; overflow-y: auto; transition: all 0.3s ease;
         }
 
-        .sidebar { width: 360px; display: flex; flex-direction: column; gap: 15px; }
-        .main-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        .queue-panel { width: 280px; }
+        .sidebar { width: 360px; display: flex; flex-direction: column; gap: 15px; transition: all 0.3s ease; }
+        .sidebar.collapsed { width: 60px; padding: 15px; overflow: hidden; }
+        .sidebar.collapsed > *:not(.collapsed-content, .toggle-btn) { display: none; }
+        
+        .main-stage { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .main-stage.expanded { flex: 2; }
+        .main-stage.full-width { flex: 3; }
+        
+        .queue-panel { width: 280px; transition: all 0.3s ease; }
+        .queue-panel.collapsed { width: 60px; padding: 15px; overflow: hidden; }
+        .queue-panel.collapsed > *:not(.collapsed-content, .toggle-btn) { display: none; }
+
+        .collapsed-content {
+            display: none;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            opacity: 0.8;
+        }
+        
+        .sidebar.collapsed .collapsed-content,
+        .queue-panel.collapsed .collapsed-content {
+            display: block;
+        }
+
+        /* 折疊按鈕 */
+        .toggle-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 8px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 2;
+            transition: all 0.3s;
+        }
+        
+        .toggle-btn:hover {
+            background: rgba(255,255,255,0.6);
+            transform: scale(1.1);
+        }
+        
+        .sidebar.collapsed .toggle-btn,
+        .queue-panel.collapsed .toggle-btn {
+            right: 10px;
+            transform: rotate(180deg);
+        }
+        
+        .sidebar.collapsed .toggle-btn:hover,
+        .queue-panel.collapsed .toggle-btn:hover {
+            transform: rotate(180deg) scale(1.1);
+        }
 
         /* --- 左側控制 --- */
         h3 { margin-bottom: 10px; font-size: 1.1rem; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 5px; opacity: 0.9; }
@@ -165,6 +230,31 @@
             font-size: 1.2rem; text-align: center; max-width: 700px; line-height: 1.6;
             border-left: 6px solid var(--primary); font-weight: 600; white-space: pre-wrap;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        /* 擴展模式下的主舞台元素 */
+        .main-stage.expanded .visual-card,
+        .main-stage.full-width .visual-card {
+            width: 350px;
+            height: 350px;
+        }
+        
+        .main-stage.expanded .timer-box,
+        .main-stage.full-width .timer-box {
+            font-size: 5.5rem;
+        }
+        
+        .main-stage.expanded .ex-title,
+        .main-stage.full-width .ex-title {
+            font-size: 2.3rem;
+        }
+        
+        .main-stage.expanded .ex-desc,
+        .main-stage.full-width .ex-desc {
+            font-size: 1.3rem;
+            max-width: 800px;
+            padding: 25px 35px;
         }
 
         /* --- 清單 --- */
@@ -190,15 +280,17 @@
         }
         .grade-card:hover { transform: translateY(-10px); border-color: var(--primary); }
 
-        /* 測試按鈕樣式 */
-        .test-voice-btn {
-            margin-top: 10px; padding: 5px 10px; font-size: 0.8rem; background: rgba(255,255,255,0.2); 
-            border: 1px solid white; color: white; border-radius: 20px; cursor: pointer;
-        }
-
         @media (max-width: 1024px) {
             .layout { flex-direction: column; overflow-y: auto; gap: 10px; }
             .sidebar, .queue-panel { width: 100%; }
+            .sidebar.collapsed, .queue-panel.collapsed { width: 100%; height: 60px; }
+            .sidebar.collapsed .collapsed-content, 
+            .queue-panel.collapsed .collapsed-content { 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                height: 100%;
+            }
         }
     </style>
 </head>
@@ -207,8 +299,6 @@
     <div class="modal" id="gradeModal">
         <h1 style="color:white; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">🏟️ 體育課堂熱身系統_獅先生</h1>
         <p style="color:rgba(255,255,255,0.9); font-size: 1.1rem;">請老師選擇上課年級</p>
-        
-        <button class="test-voice-btn" onclick="testVoice()">🔊 按我測試有沒有聲音</button>
         
         <div style="margin-top: 20px;">
             <select id="modalLang" onchange="syncLang(this.value)" style="padding: 12px 24px; font-size: 1rem;">
@@ -249,7 +339,12 @@
         </nav>
 
         <div class="layout">
-            <aside class="sidebar panel">
+            <aside class="sidebar panel" id="sidebar">
+                <button class="toggle-btn" onclick="toggleSidebar()">‹</button>
+                <div class="collapsed-content">
+                    ⚙️<br>設定
+                </div>
+                
                 <h3>⚙️ 設定</h3>
                 
                 <div class="control-item">
@@ -314,7 +409,7 @@
                 <div class="mixer-box">
                     <label style="margin-bottom:5px;">🎵 音樂風格 (可選):</label>
                     <select id="musicPreset" onchange="changeMusicSource()">
-                        <option value="default">沒有音樂</option>
+                        <option value="default">沒有音樂 </option>
                         <option value="energy">激動 (Energy)</option>
                         <option value="happy">開心 (Happy)</option>
                         <option value="game">電玩 (8-Bit)</option>
@@ -348,6 +443,17 @@
                             </div>
                             <input type="range" id="volMetro" min="0" max="1" step="0.05" value="0.5" oninput="updateMixerUI()">
                         </div>
+                        <!-- 新增：語音音量控制 -->
+                        <div class="mixer-row">
+                            <div class="mixer-label">
+                                <span>
+                                    <input type="checkbox" id="checkSpeech" checked onchange="toggleSpeechCheck()" style="margin-right:5px; vertical-align:middle;">
+                                    🔊 語音提示
+                                </span> 
+                                <span id="lblVolSpeech">50%</span>
+                            </div>
+                            <input type="range" id="volSpeech" min="0" max="1" step="0.05" value="0.5" oninput="updateMixerUI()">
+                        </div>
                     </div>
                 </div>
 
@@ -366,7 +472,7 @@
                 </div>
             </aside>
 
-            <main class="main-stage">
+            <main class="main-stage" id="mainStage">
                 <div class="phase-pill phase-rest" id="phasePill">READY</div>
                 <div class="visual-card" id="visualCard" data-state="IDLE">
                     <div class="emoji" id="mainEmoji">🧘</div>
@@ -376,15 +482,19 @@
                 <div class="ex-desc" id="exDesc">系統流程：👀 預備(5s) ➔ 🔥 運動+講解 ➔ 💚 休息</div>
             </main>
 
-            <aside class="queue-panel panel">
+            <aside class="queue-panel panel" id="queuePanel">
+                <button class="toggle-btn" onclick="toggleQueuePanel()">›</button>
+                <div class="collapsed-content">
+                    📋<br>清單
+                </div>
                 <h3>📋 動作清單</h3>
                 <ul class="queue-list" id="queueList"></ul>
             </aside>
         </div>
     </div>
 
-    <audio id="audioWorkPlayer" loop playsinline></audio>
-    <audio id="audioRestPlayer" loop playsinline></audio>
+    <audio id="audioWorkPlayer" loop></audio>
+    <audio id="audioRestPlayer" loop></audio>
 
     <script>
         // --- 1. 翻譯字典 ---
@@ -588,14 +698,19 @@
         let isPaused = false;
         let state = 'IDLE'; 
         let isDucking = false;
+        let isSidebarCollapsed = false;
+        let isQueuePanelCollapsed = false;
 
-        let tickCount = 0; 
+        let tickCount = 0;
         
         let audioCtx;
         let metroGain;
         let configWorkTime = 30;
         let configRestTime = 15;
         const READY_TIME = 5;
+
+        // 語音音量控制
+        let speechVolume = 1.0;
 
         // --- 音樂資料庫 (風格選擇) ---
         const MUSIC_PRESETS = {
@@ -611,16 +726,6 @@
 
         // --- 4. 初始化 ---
         function selectGrade(grade) {
-            // [iPad 修正] 強制喚醒
-            if (window.speechSynthesis) {
-                // 嘗試說一個空字元，但為了確保 iPad 真的醒來，我們說個 "Ready"
-                const emptyUtterance = new SpeechSynthesisUtterance("Ready");
-                emptyUtterance.volume = 0.1; // 小聲點
-                window.speechSynthesis.speak(emptyUtterance);
-            }
-            workPlayer.play().then(() => workPlayer.pause()).catch(() => {});
-            restPlayer.play().then(() => restPlayer.pause()).catch(() => {});
-
             initAudio(); 
             currentGrade = grade;
             document.body.className = `theme-${grade}`;
@@ -633,32 +738,6 @@
             restPlayer.src = MUSIC_PRESETS.rest;
             
             setTimeout(updateMixerUI, 100); 
-        }
-
-        // [iPad 修正] 測試語音功能
-        function testVoice() {
-            if (!window.speechSynthesis) {
-                alert("您的裝置不支援語音合成！");
-                return;
-            }
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance("測試成功，聲音正常");
-            
-            // 強制尋找中文語音
-            const voices = window.speechSynthesis.getVoices();
-            let voice = voices.find(v => v.lang.includes('zh-TW')) || 
-                        voices.find(v => v.lang.includes('zh-CN')) || 
-                        voices.find(v => v.lang.includes('zh'));
-            
-            if (voice) u.voice = voice;
-            else u.lang = 'zh-TW';
-
-            u.rate = 1.0;
-            window.speechSynthesis.speak(u);
-            
-            if(voices.length === 0) {
-                alert("警告：尚未偵測到語音列表。請稍後再試，或檢查 iPad 設定 -> 輔助使用 -> 語音內容 -> 聲音");
-            }
         }
 
         function initAudio() {
@@ -685,13 +764,53 @@
             document.getElementById('gradeModal').style.display = 'flex';
         }
 
-        // --- 5. 音樂來源管理 ---
+        // --- 5. 摺疊功能 ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainStage = document.getElementById('mainStage');
+            
+            isSidebarCollapsed = !isSidebarCollapsed;
+            sidebar.classList.toggle('collapsed', isSidebarCollapsed);
+            
+            updateMainStageSize();
+        }
+
+        function toggleQueuePanel() {
+            const queuePanel = document.getElementById('queuePanel');
+            const mainStage = document.getElementById('mainStage');
+            
+            isQueuePanelCollapsed = !isQueuePanelCollapsed;
+            queuePanel.classList.toggle('collapsed', isQueuePanelCollapsed);
+            
+            updateMainStageSize();
+        }
+
+        function updateMainStageSize() {
+            const mainStage = document.getElementById('mainStage');
+            
+            // 移除所有擴展類
+            mainStage.classList.remove('expanded', 'full-width');
+            
+            if (isSidebarCollapsed && !isQueuePanelCollapsed) {
+                // 只有設定摺疊
+                mainStage.classList.add('expanded');
+            } else if (!isSidebarCollapsed && isQueuePanelCollapsed) {
+                // 只有清單摺疊
+                mainStage.classList.add('expanded');
+            } else if (isSidebarCollapsed && isQueuePanelCollapsed) {
+                // 兩邊都摺疊
+                mainStage.classList.add('full-width');
+            }
+        }
+
+        // --- 6. 音樂來源管理 (新功能) ---
         function changeMusicSource() {
             const style = document.getElementById('musicPreset').value;
             const uploadPanel = document.getElementById('customUploadPanel');
             
             if (style === 'custom') {
                 uploadPanel.style.display = 'block';
+                // 如果目前沒上傳檔案，暫時不變動 src，或可提示使用者
             } else {
                 uploadPanel.style.display = 'none';
                 workPlayer.src = MUSIC_PRESETS[style];
@@ -699,14 +818,24 @@
         }
 
         function clearCustomMusic() {
+            // 清除 input
             document.getElementById('uploadWork').value = "";
             document.getElementById('uploadRest').value = "";
+            
+            // 強制切換回 Default
             document.getElementById('musicPreset').value = "default";
-            changeMusicSource(); 
+            changeMusicSource(); // 觸發切換
             alert("已清除自訂音樂，恢復為「預設 (House)」風格。");
         }
 
-        // --- 6. 訓練流程 ---
+        // --- 7. 語音音量控制 ---
+        function toggleSpeechCheck() {
+            const checkSpeech = document.getElementById('checkSpeech').checked;
+            speechVolume = checkSpeech ? parseFloat(document.getElementById('volSpeech').value) : 0;
+            updateMixerUI();
+        }
+
+        // --- 8. 訓練流程 ---
         function toggleTimeMode() {
             const mode = document.querySelector('input[name="timeMode"]:checked').value;
             document.getElementById('totalTimePanel').style.display = (mode==='total') ? 'block' : 'none';
@@ -751,7 +880,7 @@
                 configRestTime = parseInt(document.getElementById('rngRest').value);
             } else { updateTotalEstimate(); }
 
-            // 防呆機制
+            // --- 防呆機制：如果選了 Custom 但沒檔案，強制切回 Default ---
             const preset = document.getElementById('musicPreset').value;
             const customFile = document.getElementById('uploadWork').files[0];
             if (preset === 'custom' && !customFile) {
@@ -769,6 +898,7 @@
             pauseBtn.textContent = "⏸️ 暫停"; 
             isPaused = false;
             
+            // 預載
             workPlayer.load(); restPlayer.load();
             workPlayer.play().then(()=>workPlayer.pause()).catch(()=>{});
             restPlayer.play().then(()=>restPlayer.pause()).catch(()=>{});
@@ -789,27 +919,35 @@
             handleAudioAndVoice(ex); 
             
             clearInterval(timerInterval);
-            timerInterval = setInterval(tick, 500); 
-            tickCount = 0; 
+            timerInterval = setInterval(tick, 500);
+            tickCount = 0;
         }
 
         function tick() {
             if(isPaused) return;
 
+            // 1. 每 0.5 秒播放一次節拍器聲音
             if (timer > 0) playMetronomeSound();
+
+            // 2. 累加執行次數
             tickCount++;
 
+            // 3. 只有每執行 2 次 (即 1 秒) 才進行倒數和狀態檢查
             if (tickCount % 2 === 0) {
+                
+                // 執行 1 秒倒數
                 timer--;
                 let m = Math.floor(timer/60);
                 let s = timer%60;
                 document.getElementById('timerDisplay').textContent = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
 
+                // 檢查 WORK 狀態下的語音倒數
                 if (state === 'WORK') {
                     if (timer === 10) speakWithDucking(i18n[currentLang].last_10);
                     if (timer <= 3 && timer > 0) speakWithDucking(timer.toString());
                 }
 
+                // 檢查計時結束的邏輯
                 if (timer <= 0) {
                     if (state === 'READY') enterPhase('WORK');
                     else if (state === 'WORK') enterPhase('REST');
@@ -822,7 +960,7 @@
             }
         }
 
-        // --- 7. 音訊與語音 (重點修復區域) ---
+        // --- 9. 音訊與語音 (強制優先) ---
         function applyEffectiveVolume() {
             const userVolMusic = parseFloat(document.getElementById('volMusic').value);
             const userVolRest = parseFloat(document.getElementById('volRest').value);
@@ -833,49 +971,18 @@
         }
 
         function speakWithDucking(text) {
-            if (!window.speechSynthesis) return;
+            if (!window.speechSynthesis || !document.getElementById('checkSpeech').checked) return;
             window.speechSynthesis.cancel();
             
             isDucking = true;
             applyEffectiveVolume();
 
             const u = new SpeechSynthesisUtterance(text);
-            
-            // [iPad 修正] 更寬容的語音選擇邏輯 (自動降級)
-            const voices = window.speechSynthesis.getVoices();
-            let selectedVoice = null;
-            
-            if (currentLang === 'zh-TW') {
-                // 1. 優先找台灣
-                selectedVoice = voices.find(v => v.lang === 'zh-TW' || v.name.includes('Meijia') || v.name.includes('Taiwan'));
-                // 2. 找不到就找任何中文 (如 PingFang HK/China)
-                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.startsWith('zh'));
-            } else if (currentLang === 'zh-HK') {
-                selectedVoice = voices.find(v => v.lang === 'zh-HK' || v.name.includes('Hong Kong'));
-                if (!selectedVoice) selectedVoice = voices.find(v => v.lang.startsWith('zh'));
-            } else {
-                selectedVoice = voices.find(v => v.lang.startsWith('en'));
-            }
-
-            if (selectedVoice) { 
-                u.voice = selectedVoice; 
-                u.lang = selectedVoice.lang; // 雙重保險
-            } else {
-                // 如果連一個聲音都抓不到，仍然設定語言，祈禱系統預設有效
-                u.lang = currentLang; 
-            }
-
+            u.lang = currentLang;
             u.rate = 1.0;
+            u.volume = speechVolume;
             u.onend = function() { isDucking = false; applyEffectiveVolume(); };
             window.speechSynthesis.speak(u);
-        }
-
-        // 確保 iPad 載入語音列表 (這是解決聲音選單空白的關鍵)
-        if (window.speechSynthesis) {
-            window.speechSynthesis.onvoiceschanged = function() { 
-                window.speechSynthesis.getVoices(); 
-                console.log("Voices loaded:", window.speechSynthesis.getVoices().length);
-            };
         }
 
         function handleAudioAndVoice(ex) {
@@ -924,7 +1031,7 @@
             } catch (e) {}
         }
 
-        // --- 8. UI 更新 ---
+        // --- 10. UI 更新 ---
         function updateUI(ex) {
             const pill = document.getElementById('phasePill');
             const card = document.getElementById('visualCard');
@@ -936,7 +1043,10 @@
             card.setAttribute('data-state', state);
             let exName = ex.name[currentLang] || ex.name['zh-TW'];
             let exDescContent = ex.desc[currentLang] || ex.desc['zh-TW'];
-            if (currentLang === 'en-US') exDescContent += `\n\n(中文: ${ex.desc['zh-TW']})`;
+            // 只在英文模式下顯示中文翻譯
+            if (currentLang === 'en-US') {
+                exDescContent += `\n\n(中文: ${ex.desc['zh-TW']})`;
+            }
 
             if (state === 'READY') {
                 pill.className = 'phase-pill phase-ready'; pill.textContent = txt.ready;
@@ -987,7 +1097,7 @@
             document.getElementById('pauseBtn').disabled = true;
         }
 
-        // --- 9. 其他功能 ---
+        // --- 11. 其他功能 ---
         function toggleMusicSource() { /* 已由 changeMusicSource 取代 */ }
         function toggleMetronomeCheck() { updateVolumes(); } 
         document.getElementById('uploadWork').addEventListener('change', function(e) { if (e.target.files[0]) workPlayer.src = URL.createObjectURL(e.target.files[0]); });
@@ -997,8 +1107,15 @@
             document.getElementById('lblVolMusic').textContent = Math.round(document.getElementById('volMusic').value * 100) + '%';
             document.getElementById('lblVolRest').textContent = Math.round(document.getElementById('volRest').value * 100) + '%';
             document.getElementById('lblVolMetro').textContent = Math.round(document.getElementById('volMetro').value * 100) + '%';
+            document.getElementById('lblVolSpeech').textContent = Math.round(document.getElementById('volSpeech').value * 100) + '%';
+            
+            // 更新語音音量
+            const checkSpeech = document.getElementById('checkSpeech').checked;
+            speechVolume = checkSpeech ? parseFloat(document.getElementById('volSpeech').value) : 0;
+            
             applyEffectiveVolume();
         }
+        
         function updateVolumes() { /* 保留 */ }
 
         function togglePause() {
