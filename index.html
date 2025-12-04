@@ -408,30 +408,54 @@
 
                 <h3>🎛️ 獨立混音台 (Mixer)</h3>
                 <div class="mixer-box">
-                    <label style="margin-bottom:5px;">🎵 音樂風格 (可選):</label>
-                    <select id="musicPreset" onchange="changeMusicSource()">
-                        <option value="default">沒有音樂 </option>
-                        <option value="energy">激動 (Energy)</option>
-                        <option value="happy">開心 (Happy)</option>
-                        <option value="game">電玩 (8-Bit)</option>
-                        <option value="custom">📂 上傳 (Custom)</option>
-                    </select>
+                    <div class="mixer-row">
+                        <label style="margin-bottom:5px;">🔥 運動音樂風格 (可選):</label>
+                        <select id="musicPresetWork" onchange="changeMusicSource('work')">
+                            <option value="none">沒有音樂 </option>
+                            <option value="energy">激動 (Energy)</option>
+                            <option value="happy">開心 (Happy)</option>
+                            <option value="game">遊戲 (Game)</option>
+                            <option value="custom">📂 上傳 (Custom)</option>
+                        </select>
+                    </div>
+                    <div class="mixer-row">
+                        <label style="margin-bottom:5px;">💚 休息音樂風格 (可選):</label>
+                        <select id="musicPresetRest" onchange="changeMusicSource('rest')">
+                            <option value="none">沒有音樂 </option>
+                            <option value="rest">放鬆 (Chill)</option>
+                            <option value="happy">開心 (Happy)</option>
+                            <option value="game">遊戲 (Game)</option>
+                            <option value="custom">📂 上傳 (Custom)</option>
+                        </select>
+                    </div>
 
                     <div id="customUploadPanel" class="file-upload-box">
                         <span class="file-label">🔥 運動時 (Work MP3):</span>
-                        <input type="file" id="uploadWork" accept="audio/*">
+                        <input type="file" id="uploadWork" accept="audio/*, .mp3, .wav, .m4a">
                         <span class="file-label" style="margin-top:8px;">💚 休息時 (Rest MP3):</span>
-                        <input type="file" id="uploadRest" accept="audio/*">
+                        <input type="file" id="uploadRest" accept="audio/*, .mp3, .wav, .m4a">
                         <button class="btn-clear" onclick="clearCustomMusic()">🗑️ 清除上傳並還原預設</button>
                     </div>
 
                     <div style="margin-top:15px; border-top:1px solid rgba(0,0,0,0.1); padding-top:10px;">
                         <div class="mixer-row">
-                            <div class="mixer-label"><span>🔥 運動音樂</span> <span id="lblVolMusic">50%</span></div>
+                            <div class="mixer-label">
+                                <span>
+                                    <input type="checkbox" id="checkMusicWork" checked onchange="applyEffectiveVolume()" style="margin-right:5px; vertical-align:middle;">
+                                    🔥 運動音樂
+                                </span> 
+                                <span id="lblVolMusic">50%</span>
+                            </div>
                             <input type="range" id="volMusic" min="0" max="1" step="0.05" value="0.5" oninput="updateMixerUI()">
                         </div>
                         <div class="mixer-row">
-                            <div class="mixer-label"><span>💚 休息音樂</span> <span id="lblVolRest">50%</span></div>
+                            <div class="mixer-label">
+                                <span>
+                                    <input type="checkbox" id="checkMusicRest" checked onchange="applyEffectiveVolume()" style="margin-right:5px; vertical-align:middle;">
+                                    💚 休息音樂
+                                </span> 
+                                <span id="lblVolRest">50%</span>
+                            </div>
                             <input type="range" id="volRest" min="0" max="1" step="0.05" value="0.5" oninput="updateMixerUI()">
                         </div>
                         <div class="mixer-row">
@@ -716,7 +740,6 @@
 
         // --- 音樂資料庫 (風格選擇) ---
         const MUSIC_PRESETS = {
-            default: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_24a2752176.mp3", // House
             energy: "https://cdn.pixabay.com/download/audio/2022/05/16/audio_db6591201e.mp3", // Rock
             happy: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3", // Ukulele
             game: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3", // 8-bit
@@ -737,8 +760,11 @@
             updateTotalEstimate();
             
             // 初始化音樂源
-            workPlayer.src = MUSIC_PRESETS.default;
-            restPlayer.src = MUSIC_PRESETS.rest;
+            // 預設為 None,由 changeMusicSource 處理
+            document.getElementById('musicPresetWork').value = "none";
+            document.getElementById('musicPresetRest').value = "none";
+            changeMusicSource('work');
+            changeMusicSource('rest');
             
             setTimeout(updateMixerUI, 100); 
         }
@@ -806,16 +832,27 @@
         }
 
         // --- 6. 音樂來源管理 (新功能) ---
-        function changeMusicSource() {
-            const style = document.getElementById('musicPreset').value;
+        function changeMusicSource(type) {
+            const presetId = (type === 'work') ? 'musicPresetWork' : 'musicPresetRest';
+            const player = (type === 'work') ? workPlayer : restPlayer;
+            const style = document.getElementById(presetId).value;
             const uploadPanel = document.getElementById('customUploadPanel');
             
             if (style === 'custom') {
                 uploadPanel.style.display = 'block';
-                // 如果目前沒上傳檔案，暫時不變動 src，或可提示使用者
             } else {
-                uploadPanel.style.display = 'none';
-                workPlayer.src = MUSIC_PRESETS[style];
+                if (style === 'none') {
+                    player.src = '';
+                    player.pause();
+                } else {
+                    player.src = MUSIC_PRESETS[style];
+                }
+                // 檢查另一個是否也是 custom,如果都不是,則隱藏上傳面板
+                const workStyle = document.getElementById('musicPresetWork').value;
+                const restStyle = document.getElementById('musicPresetRest').value;
+                if (workStyle !== 'custom' && restStyle !== 'custom') {
+                    uploadPanel.style.display = 'none';
+                }
             }
         }
 
@@ -824,10 +861,12 @@
             document.getElementById('uploadWork').value = "";
             document.getElementById('uploadRest').value = "";
             
-            // 強制切換回 Default
-            document.getElementById('musicPreset').value = "default";
-            changeMusicSource(); // 觸發切換
-            alert("已清除自訂音樂，恢復為「預設 (House)」風格。");
+            // 強制切換回 None
+            document.getElementById('musicPresetWork').value = "none";
+            document.getElementById('musicPresetRest').value = "none";
+            changeMusicSource('work'); // 觸發切換
+            changeMusicSource('rest'); // 觸發切換
+            alert("已清除自訂音樂，恢復為「沒有音樂」風格。");
         }
 
         // --- 7. 語音音量控制 ---
@@ -882,13 +921,21 @@
                 configRestTime = parseInt(document.getElementById('rngRest').value);
             } else { updateTotalEstimate(); }
 
-            // --- 防呆機制：如果選了 Custom 但沒檔案，強制切回 Default ---
-            const preset = document.getElementById('musicPreset').value;
-            const customFile = document.getElementById('uploadWork').files[0];
-            if (preset === 'custom' && !customFile) {
-                alert("提醒：您選擇了「上傳」但未選擇檔案，系統將使用預設音樂。");
-                workPlayer.src = MUSIC_PRESETS.default;
-            }
+	            // --- 防呆機制：如果選了 Custom 但沒檔案，強制切回 None ---
+	            const presetWork = document.getElementById('musicPresetWork').value;
+	            const customFileWork = document.getElementById('uploadWork').files[0];
+	            if (presetWork === 'custom' && !customFileWork) {
+	                alert("提醒：您選擇了「運動音樂上傳」但未選擇檔案，系統將切換為「沒有音樂」。");
+	                document.getElementById('musicPresetWork').value = "none";
+	                changeMusicSource('work');
+	            }
+	            const presetRest = document.getElementById('musicPresetRest').value;
+	            const customFileRest = document.getElementById('uploadRest').files[0];
+	            if (presetRest === 'custom' && !customFileRest) {
+	                alert("提醒：您選擇了「休息音樂上傳」但未選擇檔案，系統將切換為「沒有音樂」。");
+	                document.getElementById('musicPresetRest').value = "none";
+	                changeMusicSource('rest');
+	            }
 
             if (isNew) queue = generateQueue(); 
             currentIndex = 0;
@@ -900,10 +947,11 @@
             pauseBtn.textContent = "⏸️ 暫停"; 
             isPaused = false;
             
-            // 預載
-            workPlayer.load(); restPlayer.load();
-            workPlayer.play().then(()=>workPlayer.pause()).catch(()=>{});
-            restPlayer.play().then(()=>restPlayer.pause()).catch(()=>{});
+	            // 預載
+	            workPlayer.load(); restPlayer.load();
+	            // 嘗試播放並立即暫停,以解決 iOS 首次播放限制
+	            if (workPlayer.src) workPlayer.play().then(()=>workPlayer.pause()).catch(()=>{});
+	            if (restPlayer.src) restPlayer.play().then(()=>restPlayer.pause()).catch(()=>{});
 
             renderQueue();
             enterPhase('READY'); 
@@ -963,23 +1011,34 @@
         }
 
         // --- 9. 音訊與語音 (強制優先) ---
-        function applyEffectiveVolume() {
-            const userVolMusic = parseFloat(document.getElementById('volMusic').value);
-            const userVolRest = parseFloat(document.getElementById('volRest').value);
-            const userVolMetro = parseFloat(document.getElementById('volMetro').value);
+	        function applyEffectiveVolume() {
+	            const userVolWork = parseFloat(document.getElementById('volMusic').value); // 運動音樂音量
+	            const userVolRest = parseFloat(document.getElementById('volRest').value); // 休息音樂音量
+	            
+	            const checkMusicWork = document.getElementById('checkMusicWork').checked;
+	            const checkMusicRest = document.getElementById('checkMusicRest').checked;
+	            const userVolMetro = parseFloat(document.getElementById('volMetro').value);
             
             // 語音播放時,背景音樂音量降低到 10% (0.1),否則為 100% (1.0)
             const duckingFactor = isDucking ? 0.1 : 1.0;
 
-            // 最終音量 = 用戶設定音量 * 語音降低係數
-            // 確保音量在 0 到 1 之間
-            if (state === 'WORK') workPlayer.volume = Math.min(1.0, Math.max(0.0, userVolMusic * duckingFactor));
-            else if (state === 'REST') restPlayer.volume = Math.min(1.0, Math.max(0.0, userVolRest * duckingFactor));
-            
-            // 節拍器音量控制 (移到此處,確保即時更新)
-            if (metroGain) {
-                metroGain.gain.setValueAtTime(userVolMetro, audioCtx.currentTime);
-            }
+            // 最終音量 = 用戶設定音量 * 語音降低係數 * 開關係數
+	            // 確保音量在 0 到 1 之間
+	            const workVolume = checkMusicWork ? userVolWork : 0;
+	            const restVolume = checkMusicRest ? userVolRest : 0;
+	
+	            // 應用音樂音量
+	            workPlayer.volume = Math.min(1.0, Math.max(0.0, workVolume * duckingFactor));
+	            restPlayer.volume = Math.min(1.0, Math.max(0.0, restVolume * duckingFactor));
+	            
+	            // 節拍器音量控制 (移到此處,確保即時更新)
+	            const checkMetro = document.getElementById('checkMetro').checked;
+	            const metroVolume = checkMetro ? userVolMetro : 0;
+	
+	            if (metroGain) {
+	                // 使用 linearRampToValueAtTime 確保音量平滑過渡,避免爆音
+	                metroGain.gain.linearRampToValueAtTime(metroVolume, audioCtx.currentTime + 0.05);
+	            }
         }
 
         function speakWithDucking(text) {
@@ -1016,6 +1075,9 @@
                 if (state === 'REST') restPlayer.play();
             };
             
+            // 設定 TTS 音量
+            ttsPlayer.volume = speechVolume;
+
             // 播放語音
             ttsPlayer.play().catch(err => {
                 console.error('TTS播放失敗:', err);
@@ -1059,7 +1121,6 @@
             try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                const userVol = parseFloat(document.getElementById('volMetro').value);
                 osc.type = 'square';
                 osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                 osc.connect(gain);
