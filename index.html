@@ -437,7 +437,7 @@
                         <div class="mixer-row">
                             <div class="mixer-label">
                                 <span>
-                                    <input type="checkbox" id="checkMetro" checked onchange="toggleMetronomeCheck()" style="margin-right:5px; vertical-align:middle;">
+                                    <input type="checkbox" id="checkMetro" checked onchange="applyEffectiveVolume()" style="margin-right:5px; vertical-align:middle;">
                                     ⏱️ 節拍器 (Beep)
                                 </span> 
                                 <span id="lblVolMetro">50%</span>
@@ -448,7 +448,7 @@
                         <div class="mixer-row">
                             <div class="mixer-label">
                                 <span>
-                                    <input type="checkbox" id="checkSpeech" checked onchange="toggleSpeechCheck()" style="margin-right:5px; vertical-align:middle;">
+                                    <input type="checkbox" id="checkSpeech" checked onchange="applyEffectiveVolume()" style="margin-right:5px; vertical-align:middle;">
                                     🔊 語音提示
                                 </span> 
                                 <span id="lblVolSpeech">50%</span>
@@ -496,6 +496,7 @@
 
     <audio id="audioWorkPlayer" loop></audio>
     <audio id="audioRestPlayer" loop></audio>
+    <audio id="ttsPlayer"></audio>
 
     <script>
         // --- 1. 翻譯字典 ---
@@ -724,6 +725,7 @@
 
         const workPlayer = document.getElementById('audioWorkPlayer');
         const restPlayer = document.getElementById('audioRestPlayer');
+        const ttsPlayer = document.getElementById('ttsPlayer');
 
         // --- 4. 初始化 ---
         function selectGrade(grade) {
@@ -748,7 +750,6 @@
                     audioCtx = new AudioContext();
                     metroGain = audioCtx.createGain();
                     metroGain.connect(audioCtx.destination);
-                    updateVolumes();
                 } 
                 if(audioCtx.state === 'suspended') { audioCtx.resume(); }
             } catch (e) { console.error("Audio Init Failed:", e); }
@@ -965,25 +966,65 @@
         function applyEffectiveVolume() {
             const userVolMusic = parseFloat(document.getElementById('volMusic').value);
             const userVolRest = parseFloat(document.getElementById('volRest').value);
-            const factor = isDucking ? 0.1 : 1.0;
+            const userVolMetro = parseFloat(document.getElementById('volMetro').value);
+            
+            // 語音播放時,背景音樂音量降低到 10% (0.1),否則為 100% (1.0)
+            const duckingFactor = isDucking ? 0.1 : 1.0;
 
-            if (state === 'WORK') workPlayer.volume = userVolMusic * factor;
-            else if (state === 'REST') restPlayer.volume = userVolRest * factor;
+            // 最終音量 = 用戶設定音量 * 語音降低係數
+            // 確保音量在 0 到 1 之間
+            if (state === 'WORK') workPlayer.volume = Math.min(1.0, Math.max(0.0, userVolMusic * duckingFactor));
+            else if (state === 'REST') restPlayer.volume = Math.min(1.0, Math.max(0.0, userVolRest * duckingFactor));
+            
+            // 節拍器音量控制 (移到此處,確保即時更新)
+            if (metroGain) {
+                metroGain.gain.setValueAtTime(userVolMetro, audioCtx.currentTime);
+            }
         }
 
         function speakWithDucking(text) {
-            if (!window.speechSynthesis || !document.getElementById('checkSpeech').checked) return;
-            window.speechSynthesis.cancel();
+            if (!document.getElementById('checkSpeech').checked) return;
             
+            // 停止當前 TTS 播放
+            ttsPlayer.pause();
+            ttsPlayer.currentTime = 0;
+            
+            // 降低背景音樂音量
             isDucking = true;
             applyEffectiveVolume();
-
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = currentLang;
-            u.rate = 1.0;
-            u.volume = speechVolume;
-            u.onend = function() { isDucking = false; applyEffectiveVolume(); };
-            window.speechSynthesis.speak(u);
+            
+            // 使用 Google Translate TTS API 生成語音
+            // 語言代碼映射
+            const langMap = {
+                'zh-TW': 'zh-TW',
+                'zh-HK': 'zh-CN',  // Google TTS 使用 zh-CN 作為粵語替代
+                'en-US': 'en'
+            };
+            
+            const ttsLang = langMap[currentLang] || 'zh-TW';
+            const encodedText = encodeURIComponent(text);
+            
+            // Google Translate TTS API (免費且穩定)
+            ttsPlayer.src = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${ttsLang}&client=tw-ob&q=${encodedText}`;
+            
+            // 設定語音結束後的處理
+            ttsPlayer.onended = function() {
+                isDucking = false;
+                applyEffectiveVolume();
+                // 語音結束後,根據狀態恢復音樂
+                if (state === 'WORK') workPlayer.play();
+                if (state === 'REST') restPlayer.play();
+            };
+            
+            // 播放語音
+            ttsPlayer.play().catch(err => {
+                console.error('TTS播放失敗:', err);
+                // 如果失敗,立即恢復音樂
+                isDucking = false;
+                applyEffectiveVolume();
+                if (state === 'WORK') workPlayer.play();
+                if (state === 'REST') restPlayer.play();
+            });
         }
 
         function handleAudioAndVoice(ex) {
@@ -1023,7 +1064,6 @@
                 osc.frequency.setValueAtTime(600, audioCtx.currentTime);
                 osc.connect(gain);
                 gain.connect(metroGain);
-                metroGain.gain.setTargetAtTime(userVol, audioCtx.currentTime, 0.01);
                 gain.gain.setValueAtTime(0, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.005);
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
@@ -1100,7 +1140,7 @@
 
         // --- 11. 其他功能 ---
         function toggleMusicSource() { /* 已由 changeMusicSource 取代 */ }
-        function toggleMetronomeCheck() { updateVolumes(); } 
+
         document.getElementById('uploadWork').addEventListener('change', function(e) { if (e.target.files[0]) workPlayer.src = URL.createObjectURL(e.target.files[0]); });
         document.getElementById('uploadRest').addEventListener('change', function(e) { if (e.target.files[0]) restPlayer.src = URL.createObjectURL(e.target.files[0]); });
 
@@ -1117,19 +1157,19 @@
             applyEffectiveVolume();
         }
         
-        function updateVolumes() { /* 保留 */ }
+
 
         function togglePause() {
             isPaused = !isPaused;
             const btn = document.getElementById('pauseBtn');
             btn.textContent = isPaused ? "▶️ 繼續" : "⏸️ 暫停";
             if (isPaused) {
-                workPlayer.pause(); restPlayer.pause(); window.speechSynthesis.pause();
+                workPlayer.pause(); restPlayer.pause(); ttsPlayer.pause();
                 if(audioCtx) audioCtx.suspend();
             } else {
                 if(state === 'WORK') workPlayer.play();
                 if(state === 'REST') restPlayer.play();
-                window.speechSynthesis.resume();
+                // TTS 會自動繼續播放
                 if(audioCtx) audioCtx.resume();
             }
         }
@@ -1139,7 +1179,7 @@
             isPaused = false; state = 'IDLE'; currentIndex = -1; timer = 0; isDucking = false;
             workPlayer.pause(); workPlayer.currentTime = 0;
             restPlayer.pause(); restPlayer.currentTime = 0;
-            window.speechSynthesis.cancel();
+            ttsPlayer.pause(); ttsPlayer.currentTime = 0;
             document.getElementById('startBtn').style.display = 'flex';
             document.getElementById('repeatBtn').style.display = 'none';
             document.getElementById('pauseBtn').disabled = true;
